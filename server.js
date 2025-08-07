@@ -10,7 +10,7 @@ const PORT = 3011;
 dotenv.config();
 
 // Allow only frontend origin
-app.use(cors({ origin: ['http://localhost:3009', 'https://artist-report-generator-frontend.vercel.app/']}));//change to whatever localhost I'm usingy
+app.use(cors({ origin: ['http://localhost:3009', 'https://artist-report-generator-frontend.vercel.app']}));//change to whatever localhost I'm usingy
 app.use(bodyParser.json());
 app.use(express.json());
 
