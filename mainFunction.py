@@ -31,7 +31,7 @@ from helper_function import generate_questions_dynamic
 import os
 import asyncio
 import platform
-
+from typing import List, Optional, Dict, Any, Literal
 
 #from llama_index.llms.google_gemini import GoogleGenAI
 #from google.genai import types
@@ -512,6 +512,218 @@ async def get_charts(ctx: Context, artist_id: int, chart_type: str) -> dict:
     "chart_data": relevant_details
 }
 
+async def get_playlists(
+    ctx: Context,
+    artist_id: int,
+    platform: Literal["spotify", "applemusic", "deezer", "amazon", "youtube"],
+    status:   Literal["current", "past"],
+    sort_column: Optional[str] = None,
+    sort_direction: Optional[Literal["asc", "desc"]] = None,
+    flags: Optional[List[str]] = None,
+    limit: Optional[int] = None,
+    offset: Optional[int] = None,
+) -> Dict[str, Any]:
+    """
+    Retrieve current or past playlists for an artist from Chartmetric.
+
+    Parameters:
+    - artist_id (int): Chartmetric artist ID.
+    - platform (str): One of ["spotify", "applemusic", "deezer", "amazon", "youtube"].
+    - status (str): "current" or "past".
+    - sort_column (str, optional): Sort key; validated per platform+status combination.
+      Defaults are inferred from Chartmetric docs when omitted.
+    - sort_direction (str, optional): "asc" or "desc". If omitted, Chartmetric default is used.
+    - flags (List[str], optional): Platform-specific filters. Valid by platform:
+        spotify: ["editorial","personalized","chart","thisIs","newMusicFriday","radio",
+                  "fullyPersonalized","brand","majorCurator","popularIndie","indie","audiobook"]
+        applemusic: ["editorial","editorialBrand","chart","radio","musicBrand","nonMusicBrand",
+                     "indie","personalityArtist"]
+        deezer: ["editorial","deezerPartner","chart","hundredPercent","brand","majorCurator",
+                 "popularIndie","indie"]
+        amazon: [] (no flags supported)
+        youtube: [] (flags unsupported by docs)
+    - limit (int, optional): Pagination limit if supported by endpoint.
+    - offset (int, optional): Pagination offset if supported by endpoint.
+
+    Returns:
+    - dict: {
+        "artist_id": int,
+        "platform": str,
+        "status": str,
+        "sort_column": str,
+        "flags": List[str],
+        "results": [ { "playlist_id": ..., "name": ..., ... }, ... ]
+      }
+
+    Notes:
+    - Saves results into ctx.store["state"]["working_notes"]["playlists for <artist_id>"][f"{platform}:{status}"].
+    - Requires `get_chartmetric_access_token_cached()` to be available in scope.
+    """
+
+    VALID_PLATFORMS = {"spotify","applemusic","deezer","amazon","youtube"}
+    VALID_STATUS = {"current","past"}
+
+    if platform not in VALID_PLATFORMS:
+        raise ValueError(f"Invalid platform '{platform}'. Must be one of {sorted(VALID_PLATFORMS)}.")
+    if status not in VALID_STATUS:
+        raise ValueError(f"Invalid status '{status}'. Must be one of {sorted(VALID_STATUS)}.")
+
+    # Allowed flags per platform (from docs)
+    PLATFORM_FLAGS = {
+        "spotify": {"editorial","personalized","chart","thisIs","newMusicFriday","radio",
+                    "fullyPersonalized","brand","majorCurator","popularIndie","indie","audiobook"},
+        "applemusic": {"editorial","editorialBrand","chart","radio","musicBrand","nonMusicBrand",
+                       "indie","personalityArtist"},
+        "deezer": {"editorial","deezerPartner","chart","hundredPercent","brand","majorCurator",
+                   "popularIndie","indie"},
+        "amazon": set(),
+        "youtube": set(),  # docs list no flag parameters for YouTube
+    }
+
+    # Valid sort columns per platform+status, with defaults (from docs)
+    SORT_OPTIONS = {
+        ("amazon","current"): {"valid": {"added_at","countries","name","peak_position","track"},
+                               "default": "added_at"},
+        ("applemusic","current"): {"valid": {"added_at","name","peak_position","position","track"},
+                                   "default": "added_at"},
+        ("applemusic","past"): {"valid": {"added_at","name","peak_position","position","removed_at","track"},
+                                "default": "removed_at"},
+        ("deezer","current"): {"valid": {"added_at","fdiff_month","followers","name","peak_position","track"},
+                               "default": "added_at"},
+        ("deezer","past"): {"valid": {"added_at","fdiff_month","followers","name","peak_position","removed_at","track"},
+                            "default": "removed_at"},
+        ("spotify","current"): {"valid": {"added_at","code2","fdiff_month","followers","name","peak_position","position","track"},
+                                "default": "followers"},
+        ("spotify","past"): {"valid": {"added_at","code2","fdiff_month","followers","name","peak_position","position","removed_at","track"},
+                             "default": "followers"},
+        ("youtube","current"): {"valid": {"added_at","name","peak_position","track","vdiff_month","views"},
+                                "default": "added_at"},
+        ("youtube","past"): {"valid": {"added_at","name","peak_position","removed_at","track","vdiff_month","views"},
+                             "default": "removed_at"},
+    }
+
+    sort_cfg = SORT_OPTIONS.get((platform, status))
+    if not sort_cfg:
+        raise ValueError(f"No sort configuration found for platform='{platform}', status='{status}'.")
+
+    resolved_sort = sort_column or sort_cfg["default"]
+    if resolved_sort not in sort_cfg["valid"]:
+        raise ValueError(
+            f"Invalid sort_column '{resolved_sort}' for {platform} {status}. "
+            f"Valid: {sorted(sort_cfg['valid'])}"
+        )
+
+    # Validate flags
+    flags = flags or []
+    invalid_flags = [f for f in flags if f not in PLATFORM_FLAGS[platform]]
+    if invalid_flags:
+        raise ValueError(
+            f"Invalid flags for {platform}: {invalid_flags}. "
+            f"Valid flags: {sorted(PLATFORM_FLAGS[platform])}"
+        )
+
+    access_token = get_chartmetric_access_token_cached()
+    print(f"🎧 get_playlists → artist_id={artist_id}, platform={platform}, status={status}, sort={resolved_sort}, flags={flags}")
+
+    base_url = f"https://api.chartmetric.com/api/artist/{artist_id}/{platform}/{status}/playlists"
+
+    # Build query params
+    params: Dict[str, Any] = {
+        "sortColumn": resolved_sort
+    }
+    if sort_direction in {"asc","desc"}:
+        params["sortDirection"] = sort_direction
+
+    # Flags are boolean query params when supported
+    for f in flags:
+        params[f] = True
+
+    # Pagination if exposed by the endpoint (harmless if ignored)
+    if isinstance(limit, int) and limit > 0:
+        params["limit"] = limit
+    if isinstance(offset, int) and offset >= 0:
+        params["offset"] = offset
+
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    response = requests.get(base_url, headers=headers, params=params)
+    if not response.ok:
+        print(f"❌ get_playlists failed [{response.status_code}]: {response.text}")
+        return {
+            "artist_id": artist_id,
+            "platform": platform,
+            "status": status,
+            "sort_column": resolved_sort,
+            "flags": flags,
+            "results": [],
+            "error": f"{response.status_code}: {response.text}",
+        }
+
+    data = response.json()
+    items = data.get("obj", []) or []
+
+    # Normalize results
+    results = []
+    for item in items:
+        playlist = item.get("playlist", {}) or {}
+        if not playlist:
+            continue
+        pid = playlist.get("playlist_id")
+        if not pid:
+            # no id → skip
+            continue
+
+        norm: Dict[str, Any] = {
+            "playlist_id": pid,
+            "name": playlist.get("name"),
+            "owner": playlist.get("owner") or playlist.get("curator"),
+            "followers": playlist.get("followers"),
+            "position": playlist.get("position"),
+            "peak_position": playlist.get("peak_position"),
+            "added_at": playlist.get("added_at"),
+            "removed_at": playlist.get("removed_at"),
+            "track": playlist.get("track"),
+            "views": playlist.get("views"),
+            "countries": playlist.get("countries"),
+            "code2": playlist.get("code2"),
+            "url": playlist.get("url") or playlist.get("link"),
+            "raw": playlist,  # keep raw in case you need platform fields
+        }
+        results.append({k: v for k, v in norm.items() if v is not None})
+
+    # Save to working memory in ctx
+    current_state = await ctx.store.get("state") or {}
+    if "working_notes" not in current_state:
+        current_state["working_notes"] = {}
+
+    key_space = f"playlists for {artist_id}"
+    if key_space not in current_state["working_notes"]:
+        current_state["working_notes"][key_space] = {}
+
+    save_key = f"{platform}:{status}"
+    current_state["working_notes"][key_space][save_key] = {
+        "params": {
+            "sort_column": resolved_sort,
+            "sort_direction": sort_direction,
+            "flags": flags,
+            "limit": limit,
+            "offset": offset,
+        },
+        "results": results,
+    }
+    await ctx.store.set("state", current_state)
+
+    print(f"✅ get_playlists returned {len(results)} playlists.")
+    return {
+        "artist_id": artist_id,
+        "platform": platform,
+        "status": status,
+        "sort_column": resolved_sort,
+        "flags": flags,
+        "results": results,
+    }
+
+
 
     prompto3 = f"""
 # ROLE & TASK
@@ -541,7 +753,7 @@ If a section lacks data, keep the section but write “*No platform data supplie
 
 # MARKDOWN TEMPLATE  (to be populated – do NOT repeat unfilled)
 ### Deep-Dive Audience Analysis for {chosen_artist}  
-(Synthesising Instagram, TikTok & YouTube data within Turkish pop-market context)
+(Synthesising Instagram, TikTok & YouTube, Charts & Playlist data within Turkish pop-market context)
 
 ---
 
@@ -646,10 +858,10 @@ manager_agent = ReActAgent(
 
 streaming_chart_agent = ReActAgent(
     name="StreamingChartAgent",
-    description="agent to retrieve streaming chart data for the artist being researched",
-    system_prompt=("You are a research agent that retrieves streaming chart information about an artist"),
+    description="agent to retrieve streaming chart and playlist data for the artist being researched",
+    system_prompt=("You are a research agent that retrieves streaming chart and playlist data information about an artist"),
     llm=llm,
-    tools=[get_charts, find_artist_id_for_artist],
+    tools=[get_charts, find_artist_id_for_artist, get_playlists],
     can_handoff_to=["ManagerAgent", "SimilarityAgent", "SocialMediaDataAgent"]
 )
 
@@ -672,14 +884,7 @@ social_media_data_agent = ReActAgent(#try with Function Agents first, change to 
     can_handoff_to=["ManagerAgent", "SimilarityAgent", "StreamingChartAgent"]#allow it to handoff to all other agents
 )
 
-streaming_chart_agent = ReActAgent(
-    name="StreamingChartAgent",
-    description="agent to retrieve streaming chart data for the artist being researched",
-    system_prompt=("You are a research agent that retrieves streaming chart information about an artist"),
-    llm=llm,
-    tools=[get_charts, find_artist_id_for_artist],
-    can_handoff_to=["ManagerAgent", "SimilarityAgent", "SocialMediaDataAgent"]
-)
+
 
 similarity_agent = ReActAgent(
     name="SimilarityAgent",
