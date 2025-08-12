@@ -1,0 +1,32 @@
+# Web framework
+fastapi
+uvicorn[standard]
+
+# Concurrency helpers
+anyio
+
+# Environment management
+python-dotenv
+
+# HTTP requests
+requests
+httpx  # optional, but nice if you later swap from requests
+
+# LlamaIndex core + OpenAI integration
+llama-index
+llama-index-llms-openai
+
+# OpenAI official SDK
+openai
+
+# Token counting
+tiktoken
+
+# Gradio (UI, might be optional if you're not serving a Gradio app)
+gradio
+
+# Google Generative AI client
+google-generativeai
+
+# Optional: If helper_function.py or other modules import them
+# Add any other third-party libs you see in imports there.
