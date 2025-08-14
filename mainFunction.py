@@ -724,6 +724,189 @@ async def get_playlists(
     }
 
 
+async def get_artist_news(
+    ctx: Context,
+    artist_id: int,
+    *,
+    limit: Optional[int] = None,          # 0–50 (Chartmetric default: 10 if omitted)
+    weight: Optional[int] = None,         # 0–10 (Chartmetric default: 5 if omitted)
+    min_stars: Optional[int] = None,      # convenience: 1 star == weight 2
+    request_timeout: int = 20,
+) -> Dict[str, Any]:
+    """
+    Retrieve recent news or milestone events for a given artist from the Chartmetric API.
+
+    Parameters:
+    - ctx (Context): LlamaIndex Context object for accessing persistent state (`ctx.store`).
+    - artist_id (int): The Chartmetric artist ID.
+    - limit (int, optional): Number of news items to return.  
+      Range: 0–50 (inclusive). Default: 10 if omitted.
+    - weight (int, optional): Importance/weight score for filtering news items.  
+      Range: 0–10 (inclusive). Default: 5 if omitted.  
+      Higher weight → more significant events.
+    - min_stars (int, optional): Convenience parameter.  
+      1 star = weight 2.  
+      If provided and `weight` is not set, `weight` will be derived as `min_stars * 2`,  
+      clamped to 0–10.
+    - request_timeout (int, optional): Timeout in seconds for the API request. Default: 20.
+
+    Returns:
+    - dict: {
+        "artist_id": int,
+        "params": { "limit": int, "weight": int, "min_stars": int },
+        "results": [
+            {
+                "news_id": str,
+                "type": str,
+                "sub_type": str,
+                "formatted_date": str,
+                "image_url": str,
+                "stars": int,
+                "summary": {
+                    "template": str,
+                    "data": dict
+                },
+                "metadata": dict,
+                "raw": dict
+            },
+            ...
+        ]
+      }
+
+    Notes:
+    - Results are also saved to `ctx.store["state"]["working_notes"]["news for <artist_id>"]["latest"]`.
+    - Requires `get_chartmetric_access_token_cached()` to be defined in scope.
+    - If both `min_stars` and `weight` are provided, `weight` takes precedence.
+    - API endpoint: `GET https://api.chartmetric.com/api/artist/{artist_id}/news`
+    """
+
+    # ----- derive weight from stars (2 weight == 1 star) -----
+    if min_stars is not None and weight is None:
+        try:
+            ms = int(min_stars)
+        except Exception:
+            raise ValueError("min_stars must be an integer")
+        # clamp 0..10
+        weight = max(0, min(10, ms * 2))
+
+    # ----- validate -----
+    if limit is not None:
+        if not isinstance(limit, int):
+            raise ValueError("limit must be an integer between 0 and 50")
+        if not (0 <= limit <= 50):
+            raise ValueError("limit must be between 0 and 50 (inclusive)")
+    if weight is not None:
+        if not isinstance(weight, int):
+            raise ValueError("weight must be an integer between 0 and 10")
+        if not (0 <= weight <= 10):
+            raise ValueError("weight must be between 0 and 10 (inclusive)")
+
+    # ----- token -----
+    try:
+        access_token = get_chartmetric_access_token_cached()
+        if asyncio.iscoroutine(access_token):
+            access_token = await access_token
+    except NameError:
+        raise RuntimeError("get_chartmetric_access_token_cached() is not defined in scope.")
+    except Exception as e:
+        raise RuntimeError(f"Failed to obtain Chartmetric token: {e}") from e
+
+    print(f"📰 get_artist_news → artist_id={artist_id}, limit={limit}, weight={weight} (min_stars={min_stars})")
+
+    # ----- request -----
+    base_url = f"https://api.chartmetric.com/api/artist/{artist_id}/news"
+    params: Dict[str, Any] = {}
+    if limit is not None:
+        params["limit"] = limit
+    if weight is not None:
+        params["weight"] = weight
+
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    try:
+        resp = requests.get(base_url, headers=headers, params=params, timeout=request_timeout)
+    except requests.RequestException as e:
+        err = f"request_error: {e.__class__.__name__}: {e}"
+        print(f"❌ get_artist_news failed [{err}]")
+        return {
+            "artist_id": artist_id,
+            "params": {"limit": limit, "weight": weight, "min_stars": min_stars},
+            "results": [],
+            "error": err,
+        }
+
+    if not resp.ok:
+        print(f"❌ get_artist_news failed [{resp.status_code}]: {resp.text}")
+        return {
+            "artist_id": artist_id,
+            "params": {"limit": limit, "weight": weight, "min_stars": min_stars},
+            "results": [],
+            "error": f"{resp.status_code}: {resp.text}",
+        }
+
+    # ----- parse -----
+    try:
+        data = resp.json()
+    except ValueError:
+        return {
+            "artist_id": artist_id,
+            "params": {"limit": limit, "weight": weight, "min_stars": min_stars},
+            "results": [],
+            "error": "invalid_json: response was not JSON",
+        }
+
+    items = (data.get("obj") if isinstance(data, dict) else data) or []
+    if not isinstance(items, list):
+        items = []
+
+    results: List[Dict[str, Any]] = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        news_id = item.get("id")
+        if news_id is None:
+            continue
+
+        norm = {
+            "news_id": news_id,
+            "type": item.get("type"),
+            "sub_type": item.get("subType"),
+            "formatted_date": item.get("formattedDate"),
+            "image_url": item.get("imageUrl"),
+            "stars": item.get("stars"),
+            "summary": {
+                "template": item.get("summaryTemplate"),
+                "data": item.get("summaryData") or {},
+            },
+            "metadata": item.get("metadata") or {},
+            "raw": item,
+        }
+        results.append({k: v for k, v in norm.items() if v is not None})
+
+    # ----- persist (best-effort, assumes ctx.store exists) -----
+    try:
+        state = await ctx.store.get("state") or {}
+        state.setdefault("working_notes", {})
+        key_space = f"news for {artist_id}"
+        state["working_notes"].setdefault(key_space, {})
+        state["working_notes"][key_space]["latest"] = {
+            "params": {"limit": limit, "weight": weight, "min_stars": min_stars},
+            "results": results,
+        }
+        await ctx.store.set("state", state)
+    except Exception as e:
+        print(f"⚠️  Skipping state persistence: {e}")
+
+    print(f"✅ get_artist_news returned {len(results)} items.")
+    return {
+        "artist_id": artist_id,
+        "params": {"limit": limit, "weight": weight, "min_stars": min_stars},
+        "results": results,
+    }
+
+
+
+
 
     prompto3 = f"""
 # ROLE & TASK
@@ -844,14 +1027,18 @@ manager_agent = ReActAgent(
     name="ManagerAgent",
     description="Manager agent decides which other agents to use, and is decision maker",
     system_prompt=(
-    "You are the manager agent. You do not collect data yourself. You delegate tasks to other agents.\n\n"
-    "Your responsibilities are:\n"
-    "- Receive the user’s question\n"
-    "- Decide whether StreamingChartAgent or SocialMediaDataAgent or SimilarityAgent (or two or all) should handle the request\n"
-    "+ If the question is about social media audience data (TikTok, Instagram, YouTube), use SocialMediaDataAgent."
-"+ If the question is about chart positions, chart history, or streaming rankings, use StreamingChartAgent."
-    "- Wait for their responses and evaluate whether the question has been sufficiently answered\n"
-),
+        "You are the manager agent. You do not collect data yourself. You delegate.\n"
+        "HARD ROUTING RULES (must follow exactly):\n"
+        "- If the question is about social media audience data (TikTok, Instagram, YouTube) or artist news: delegate to SocialMediaDataAgent.\n"
+        "- If the question is about chart positions, chart history, streaming rankings, or playlists: delegate to StreamingChartAgent.\n"
+        "- If the question is about similar artists: delegate to SimilarityAgent.\n"
+        "If the first delegation errors, retry the SAME agent once; if it still fails, return the error."
+        "\n\nExamples:\n"
+        "Q: 'What is the recent news about Kenan Doğulu?' → SocialMediaDataAgent\n"
+        "Q: 'How is Kenan Doğulu doing on playlists this week?' → StreamingChartAgent\n"
+        "Q: 'Give me IG/TikTok/YouTube audience for Kenan Doğulu' → SocialMediaDataAgent\n"
+        "Q: 'Who is similar to Kenan Doğulu?' → SimilarityAgent\n"
+    ),
     llm=llm,
     can_handoff_to=["SocialMediaDataAgent", "SimilarityAgent", "StreamingChartAgent"]
 )
@@ -880,7 +1067,7 @@ social_media_data_agent = ReActAgent(#try with Function Agents first, change to 
 )
 ,
     llm=llmHigher,
-    tools=[get_instagram_audience_data, find_artist_id_for_artist, get_tiktok_audience_data, get_youtube_audience_data],
+    tools=[get_instagram_audience_data, find_artist_id_for_artist, get_tiktok_audience_data, get_youtube_audience_data, get_artist_news],
     can_handoff_to=["ManagerAgent", "SimilarityAgent", "StreamingChartAgent"]#allow it to handoff to all other agents
 )
 
