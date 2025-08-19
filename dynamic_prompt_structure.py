@@ -549,7 +549,7 @@ Follow the GOOD pattern.
 
     answer_text = resp.choices[0].message.content
     print(answer_text)
-    with open(f"generatedDynamicReportPromptStructure{report_question}.txt","w", encoding="utf-8") as file:
+    with open(f"generatedDynamicReportPromptStructure{report_question[:10]}.txt","w", encoding="utf-8") as file:
         file.write(answer_text)
     return answer_text
 
