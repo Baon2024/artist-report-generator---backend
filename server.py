@@ -7,6 +7,13 @@ from dotenv import load_dotenv
 from helFunction import generate_report_sync
 from anyio import to_thread  # pip install anyio
 import os
+from openai import OpenAI
+from dynamic_prompt_structure import generate_dynamic_report_prompt_structure
+
+client = OpenAI(
+    api_key=os.getenv('OPENAI_API_KEY'),
+)
+
 
 load_dotenv()
 
@@ -27,57 +34,46 @@ app.add_middleware(
 
 class ReportRequest(BaseModel):
     chosenArtist: str
-
-PURPOSE_OUTLINE = """Core Collectif - Audience Insight Report 
-
-Artist name: XXXXXX
-Primary location: XXXXXXXX
-One liner: (e.g., “Urban TikTok Club Fans”)
-
-Bio + what stands out:
-(placeholder)
-
-
-Audience Behavior & Segmentation
-Audience Age-Tier Segmentation (#9) - Overlay IG/TikTok age data on Apple vs. Spotify splits; surface platform-age mismatches signaling untapped cohorts.
-
-Superfan Cohort Identification (#5) – Who are the superfans? What brings them together and are there similarities between them? 
-
-Demographic Skew Alerts (#17) – Compute gender / age share per platform; are there niches that they are specifically bias towards? 
-
-Geo-Hotspot Map (#4) – Insight that maybe someone would not have looked at before. Join Shazam country/city tags with Spotify top-city streams; output top 5 emerging markets with >50% YoY growth but <10% marketing spend.
-
-Drop-Off Funnel Diagnostics (#10) –  Are there specific types of songs that they are dropping off from? Build listener funnel (first play → 30-sec completion → save → repeat week-2). Highlight stages with >40% attrition. Are there specific types of songs that they are dropping off from? 
-
-Language & Lyric Sentiment Impact (#16) – Looking to understand how the audience reacts and engages with specific types of music Correlate positive/negative lyrical sentiment with save-rate across platforms; flag moods that are over- or under-indexed in performance.
-Are there any affinities or traits of your fans that suggest you should post social media content around that theme
+    reportFocus: str
 
 
 
-Content & Release Strategy
-Seasonality Sweet-Spots (#1) – Are there specific times of the month/seasons when the artist should release? Has there been releases in the past that have worked well at specific dates?
-Aggregate peak-day counts by month across charts; surface months where z-score > +1 to identify best release windows.
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
-Weekend vs Weekday Dynamics (#2) – Compare average rank changes of Friday released tracks vs others; flag deltas greater than 10%.
-
-Release-Day Social Cadence (#13) – Cluster social post timestamps around release days; suggest schedule that maximizes outcome for creating strong streaming outcomes
-
-Catalogue Revival Candidates (#15) – Are there tracks we should be promoting again?? Detect tracks >24 months old with >30 rank increase in Shazam in past 60 days; mark for re-promotion.
-
-DSP Editorial vs Algorithmic (#20) – Split streams by editorial vs algorithmic playlists using metadata; quantify which drives longer-tail listening.
-Have there been specific spikes in streaming that can be correlated to social media campaign/posts across any of the socials
-"""
 
 @app.post("/reportGenerator")
 async def report_generator(payload: ReportRequest) -> Any:
     chosen_artist = payload.chosenArtist
-    if not chosen_artist or not PURPOSE_OUTLINE:
+    print(f"chosen_artist is: {chosen_artist}")
+    report_focus = payload.reportFocus
+    print(f"report_focus is: {report_focus}")
+    #need a report description passed from frontend - "generate me a report analysing growth markets" 
+
+    if not chosen_artist or not report_focus:
         raise HTTPException(status_code=404, detail="either chosenArtist or purposeOutline do not exist or both")
+
+
+
+    #generate dynamic prompt, based on prompt blocks
+    
+
+   
+
+    report_question = report_focus + f"for the artist {chosen_artist}"
+    print(f"report_question is: {report_question}")
+
+    #add as imported function here
+    prompt_structure = generate_dynamic_report_prompt_structure(report_question)
+
+    #pass down prompt structure as function param, then need to add overall_answers to prompt structure in mainFunction.py, before sending to model
+    
 
     try:
         # Run your (blocking/async-mixed) pipeline in a thread
         result_text = await to_thread.run_sync(
-            generate_report_sync, chosen_artist, PURPOSE_OUTLINE
+            generate_report_sync, chosen_artist, prompt_structure
         )
 
         # Mirror your old behavior (Node returned result.data[0]); here we just return the text.
