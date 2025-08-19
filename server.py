@@ -23,6 +23,7 @@ app = FastAPI()
 origins = [
     "http://localhost:3009",
     "https://artist-report-generator-frontend.vercel.app",
+    "https://reverb.corecollectif.com",
 ]
 app.add_middleware(
     CORSMiddleware,
