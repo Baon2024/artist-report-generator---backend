@@ -9,13 +9,18 @@ from anyio import to_thread  # pip install anyio
 import os
 from openai import OpenAI
 from dynamic_prompt_structure import generate_dynamic_report_prompt_structure
+from googleSheetsMain import get_credentials
+from googleapiclient.discovery import build
+
+
+load_dotenv()
 
 client = OpenAI(
     api_key=os.getenv('OPENAI_API_KEY'),
 )
 
 
-load_dotenv()
+
 
 app = FastAPI()
 
@@ -37,11 +42,88 @@ class ReportRequest(BaseModel):
     chosenArtist: str
     reportFocus: str
 
+class GeneratedReport(BaseModel):
+    artistReport: str
+    chosenArtist: str
+    reportFocus: str
 
 
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+##server endoint to generate google doc from generated reort, and return it to user
+@app.post("/reportGoogleDoc")
+async def report_google_doc(payload: GeneratedReport) -> Any:
+    artist_report = payload.artistReport
+    print(f"artist_report is: {artist_report}")
+    chosen_artist = payload.chosenArtist
+    print(f"chosen_artist is: {chosen_artist}")
+    report_focus = payload.reportFocus
+    print(f"report_focus is: {report_focus}")
+
+    #need to create google doc, get credentials first
+    creds = get_credentials()
+
+    # Use Docs API
+    docs = build("docs", "v1", credentials=creds)
+    doc = docs.documents().create(
+        body={"title": f"report on {report_focus} for {chosen_artist}"}# get reort name from combo of artist and theme
+    ).execute()
+
+    doc_id = doc.get("documentId")
+    doc_url =  f"https://docs.google.com/document/d/{doc_id}"
+    print(f"Created Doc: https://docs.google.com/document/d/{doc_id}") 
+
+    cursor = 1
+    requests = []
+
+    def insert(text: str):
+        nonlocal cursor, requests
+        start = cursor
+        requests.append({
+            "insertText": {"location": {"index": cursor}, "text": text}
+        })
+        cursor += len(text)
+        return start, cursor
+
+    def style_paragraph(start: int, end: int, named_style: str):
+        requests.append({
+            "updateParagraphStyle": {
+            "range": {"startIndex": start, "endIndex": end},
+            "paragraphStyle": {"namedStyleType": named_style},
+            "fields": "namedStyleType"
+            }
+        })
+    
+
+    s, e = insert(f"{chosen_artist}: {report_focus}\n")
+    style_paragraph(s, e, "TITLE")
+
+    # 4) Subtitle (optional)
+    s, e = insert("Audience Intelligence & Growth Outline\n")
+    style_paragraph(s, e, "SUBTITLE")
+
+    # 5) Spacer
+    insert("\n")
+
+    # 6) Body (your whole string)
+    #    Keep it simple: normal paragraphs. Make sure it ends with a newline.
+    body_text = artist_report.rstrip() + "\n"
+    s, e = insert(body_text)
+    # (Optional) explicitly set as NORMAL_TEXT
+    style_paragraph(s, e, "NORMAL_TEXT")
+
+    # 7) Execute
+    docs.documents().batchUpdate(
+        documentId=doc_id, body={"requests": requests}
+    ).execute()
+
+
+    return doc_url
+
+    
 
 
 @app.post("/reportGenerator")

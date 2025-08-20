@@ -1,0 +1,31 @@
+# Growth Markets Report for Bertie Blackman
+
+## Audience Age-Tier Segmentation
+Context: Examination of age-specific engagement across platforms such as Instagram, TikTok, Apple Music, and Spotify. Focus on identifying mismatches between platform age demographics and overall artist listener age brackets. *TBD – requires platform data.*
+
+## Superfan Cohort Identification
+Emphasis: Identification of superfans through metrics such as listening frequency, merchandise purchases, and social media engagement. Focus on creating detailed cohort profiles and strategies to enhance engagement with these key audience segments.
+
+## Demographic Skew Alerts
+Focus: Analysis of gender and age distribution discrepancies across different platforms compared to the artist's overall demographic baseline. Context includes recommendations for adjusting marketing strategies to address these skews. *TBD – requires platform data.*
+
+## Geo-Hotspot Map
+Emphasis: Mapping of high-growth regions by merging data from Shazam and Spotify with regional marketing expenditures. Focus on uncovering markets with significant growth potential and minimal current marketing investment. *TBD – requires platform data.*
+
+## Language & Lyric Sentiment Impact
+Context: Exploration of how different lyrical sentiments influence listener behavior across platforms. Focus on identifying sentiment-driven performance variances and creative strategies for optimizing lyrical content. *TBD – requires platform data.*
+
+## Discovery-to-Streaming Lift
+Focus: Understanding the correlation between initial discovery through Shazam and subsequent streaming behavior on Spotify. Context includes analyzing conversion pathways and developing strategies to maximize discovery impact. *TBD – requires platform data.*
+
+## Playlist Crossover Opportunities
+Context: Investigation of playlist dynamics, focusing on identifying recurring co-artists and potential collaboration networks. Emphasis on expanding audience reach through strategic playlist placements. *TBD – requires platform data.*
+
+## TikTok Hook Efficiency
+Emphasis: Assessment of the effectiveness of TikTok hooks in driving Spotify streaming increases. Focus on analyzing successful timing and creative patterns to enhance future promotional efforts. *TBD – requires platform data.*
+
+## Tour Routing Optimizer
+Focus: Prioritization of cities for live performances based on data-driven insights from Shazam and Spotify. Context includes logistical planning and financial projections for maximizing tour success. *TBD – requires platform data.*
+
+## Ad-Platform Allocation
+Context: Evaluation of advertising spend efficiency across different platforms and campaigns. Emphasis on optimizing budget allocation to achieve the highest returns on investment. *TBD – requires platform data.*

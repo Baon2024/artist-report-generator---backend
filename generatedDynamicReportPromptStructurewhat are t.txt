@@ -1,0 +1,7 @@
+# Demographics of Harry Lyon's Audience
+
+## Audience Age-Tier Segmentation
+Focus: Explore the age distribution of Harry Lyon's audience across different platforms. Context includes overlaying Instagram and TikTok age shares with Apple Music and Spotify listener data. *TBD – requires platform data.*
+
+## Demographic Skew Alerts
+Focus: Identify any notable gender or age skews across platforms such as Spotify, Apple, TikTok, and Instagram, compared to the artist's baseline demographics. Emphasis on determining potential platform-specific targeting strategies. *TBD – requires platform data.*

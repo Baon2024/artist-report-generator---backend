@@ -1,0 +1,16 @@
+# Overseas Market Expansion for Harry Lyon
+
+## Geo-Hotspot Map
+Focus: Identifying emerging markets and potential growth regions for Harry Lyon by examining streaming trends and regional engagement signals. Context includes YoY growth and current marketing spend. *TBD – requires platform data.*
+
+## Superfan Cohort Identification
+Focus: Detecting and understanding Harry Lyon's superfan demographics and behaviors through engagement metrics such as repeat listens and social media interactions. Context includes cohort size and characteristic analysis.
+
+## Demographic Skew Alerts
+Focus: Evaluating demographic distribution across platforms for Harry Lyon against artist baselines. Context includes identifying skews and suggesting targeted strategies to address them.
+
+## Discovery-to-Streaming Lift
+Focus: Exploring the pathways from discovery events like Shazam identifications to streaming spikes for Harry Lyon. Context includes viral conversion rates and amplification strategies.
+
+## Audience Affinity Themes
+Focus: Understanding fan interests and affinities related to Harry Lyon by analyzing bios, comments, and associated content. Context includes revealing prominent themes and potential engagement strategies.

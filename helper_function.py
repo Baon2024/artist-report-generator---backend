@@ -130,8 +130,8 @@ def generate_questions_dynamic(artist_name, prompt):
     message = f"""Using the purpose_outline passed to you, you need to generate a series of questions of as many questions as you think are neccessary to fulfill the outline.
 
 
-The following tools are available to answer the questions you generate: get_tiktok_audience_data, get_instagram_audience_data, get_youtube_audience_data, get_similar_artists, get_charts.
-You should generate questions that can axctually be answered with the tools available to you.
+The following tools are available to answer the questions you generate: get_tiktok_audience_data, get_instagram_audience_data, get_youtube_audience_data, get_similar_artists, get_charts, get_playlists, get_artist_news.
+You should generate questions that can axctually be answered with the tools available to you. they ensure access to instagram, tiktok, youtube, general chart and playlist data, and news about the artist
 
 You should return the questions in the format: ["question 1", "question 2", "question 3"]. NO NUMBERS, STRICTLY THAT SCHEMA. No more than 10, no less than 7 questions.
 

@@ -1,0 +1,28 @@
+# Overseas Market Expansion Report for Harry Lyon
+
+## Audience Age-Tier Segmentation
+Context: Analyze age-based audience distribution across social media platforms and music streaming services to identify mismatches. Emphasis on aligning content and marketing strategies with age-specific preferences. *TBD – requires platform data.*
+
+## Superfan Cohort Identification
+Focus: Identify and categorize superfans based on engagement metrics such as repeat listens and social media interactions. Consideration of strategies to nurture these high-value audiences to foster loyalty and advocacy.
+
+## Demographic Skew Alerts
+Emphasis: Monitor gender and age distribution discrepancies across platforms compared to Harry Lyon's overall audience. Context includes recommendations for targeting adjustments to leverage or address demographic skews.
+
+## Geo-Hotspot Map
+Focus: Identify emerging international markets for expansion by integrating streaming data with marketing investment insights. Context includes strategic entry tactics and budget recommendations. *TBD – requires platform data.*
+
+## Language & Lyric Sentiment Impact
+Context: Examine correlations between lyrical themes and listener engagement metrics. Focus on utilizing sentiment analysis to refine creative strategies and enhance audience connection.
+
+## Discovery-to-Streaming Lift
+Emphasis: Understand and map the journey from music discovery to streaming increases, highlighting effective pathways for market penetration. Context includes suggestions for amplifying Harry Lyon's visibility and conversion in new markets.
+
+## Playlist Crossover Opportunities
+Focus: Explore potential collaboration and promotional opportunities through analysis of playlist overlaps and co-artist networks. Consideration of the strategic selection of collaborators to expand audience reach.
+
+## Tour Routing Optimizer
+Context: Prioritize international tour stops based on engagement metrics and historical ticket sales data to maximize reach and audience engagement. Emphasis on strategic venue selection and tour planning.
+
+## Ad-Platform Allocation
+Focus: Optimize advertising budgets across digital platforms to maximize streaming growth. Consideration of budget adjustment scenarios to ensure cost-effective audience acquisition and expansion. *TBD – requires platform data.*

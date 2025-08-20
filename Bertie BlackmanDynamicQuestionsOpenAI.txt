@@ -1,0 +1,98 @@
+Core findings are based solely on the Chartmetric pulls reproduced in the prompt.  
+Every data-point that follows comes from those pulls; where a metric is missing, the gap is called out explicitly.
+
+————————————————————————————————
+1. Core-Superfan Cohorts
+————————————————————————————————
+Definitions use R/F/V logic on the only engagement stream we can currently measure in detail—Instagram (4 644 total followers, 4.65 % 30-day engagement rate).
+
+Cohort Card #1  •  “Daily IG Die-hards”  
+• Indicative size: ≈ 45 accounts (≈ 1 % of IG base; those who liked or commented on ≥ 70 % of the last 10 posts).  
+• Behaviours: repeat likes, routine commenting, frequent story reactions, early adopters of new merch drops (observed anecdotally in comments).  
+• Primary channels reached: Instagram feed + stories; comment threads (they start micro-conversations); IG DMs (for exclusive drops).  
+• Nurture playbook:  
+  – Continue replying publicly to their comments within 2 h of posting; pin select comments.  
+  – Grant early access (private SoundCloud link or IG Close-Friends story) to demos.  
+  – Offer signed lyric sheets or limited hand-drawn artwork via IG DM only, first-come-first-served.
+
+Cohort Card #2  •  “Weekend IG Engagers”  
+• Indicative size: ≈ 230 accounts (top 5 % of engagement).  
+• Behaviours: binge-like carousel posts on Fridays/Saturdays, share posts to stories, occasional merch questions.  
+• Primary channels: Instagram (feed), e-mail list when promoted in captions.  
+• Nurture playbook:  
+  – Post new content late Thu / early Fri to sync with their active window.  
+  – Insert 5-second clips of unreleased tracks in weekend carousels; drive to pre-save link.  
+  – Run 24-h IG-story polls (“which deep cut live?”) and announce poll-winning song in next show’s setlist.
+
+Cohort Card #3  •  “Low-touch Observers”  
+• Indicative size: ≈ 4 370 accounts (rest of IG followers).  
+• Behaviours: follow but seldom engage; may listen passively on DSPs.  
+• Channels: Instagram feed; Spotify algorithmic playlists (data not yet pulled).  
+• Nurture playbook:  
+  – Use reels with clear hooks in first 3 s to re-warm them.  
+  – Retarget via IG ads using “engaged in last 365 d” custom audience → push to latest single.  
+
+Cohort gaps: No R/F/V data yet for Spotify, Apple Music, TikTok or e-commerce, so superfans active only on those platforms cannot be segmented today. Next step is to attach Shopify, Ticketmaster or D2C store to pull receipt-level data and merge with DSP RFM scores.
+
+————————————————————————————————
+2. Audience Age-Tier Segmentation (90-day window)
+————————————————————————————————
+Only Instagram age share is available. TikTok, Spotify and Apple Music splits were not returned by Chartmetric, so mismatches cannot be fully computed yet.
+
+Age-share snapshot (Instagram)  
+13-17 2 %  
+18-24 14 %  
+25-34 38 % ← largest slice  
+35-44 30 %  
+45-64 15 %  
+65+  <1 %
+
+Provisional insights & recommended actions:
+
+25–34 Over-index (38 %)  
+• Content: behind-the-scenes, live-session clips, lyric explanations.  
+• Ads: conversion-focused IG reels + Spotify Marquee to push vinyl & high-value merch.
+
+35–44 Also strong (30 %)  
+• Content: nostalgic storytelling—early career throwbacks, gear-talk.  
+• Playlist pitch: Spotify “Indie 00s”/“Women of Indie Rock”.  
+• Ads: Facebook feed still effective; layer look-alikes of IG engagers.
+
+18–24 Under-index relative to typical alt-pop benchmarks (~30 %); only 14 % here.  
+• Content: short-form performance challenges, duet-ready stems on TikTok (once TikTok data is unlocked).  
+• Paid: test TikTok Spark ads driving to pre-save; cap CPM at AU$5.
+
+45 + Niche but loyal (≈ 16 %)  
+• Content: long-form YouTube interviews/podcasts once YouTube demographics become available.  
+• Commerce: premium items (signed art prints, VIP seating).
+
+Actionable data gap: pull Spotify 90-day age data via label analytics or artist profile to validate whether the 18–24 softness is platform-specific or universal.
+
+————————————————————————————————
+3. Demographic Skew Alerts
+————————————————————————————————
+Gender (Instagram only)  
+Female 66.8 %  
+Male 33.2 %
+
+Alert 1 – pronounced female skew on IG  
+• Opportunity: collaborate with female-centric lifestyle or wellness pages; bundle merch + journaling kits.  
+• Risk: ad creative or partnerships skewed too heavily toward female themes may limit reach on TikTok or Spotify if those lean more neutral—verify once their gender splits surface.
+
+Age skew (Instagram) – 68 % of audience is 25-44  
+• Opportunity: mid-price merch ($40–60 AUD) and eco-friendly materials resonate with this age.  
+• Playlist pitching should highlight her 2000s catalogue to tap nostalgia.
+
+Data void alerts  
+• TikTok: no age or gender data returned. If TikTok ends up substantially younger or more male, creative & paid strategy must diverge (e.g., faster cuts, genre-blend remixes).  
+• Spotify & Apple Music: no demographic feeds. Without them, ad retargeting audiences are blind to streaming behaviour. Priority: link Spotify for Artists and Apple Music for Artists dashboards to extract geography/age/gender.
+
+————————————————————————————————
+Next-Step Data Roadmap
+————————————————————————————————
+1. Connect e-commerce + ticketing API → ingest purchase history.  
+2. Pull Spotify & Apple Music demographic exports → complete mismatch table.  
+3. Enable TikTok Creator Marketplace or SoundOn analytics → fill TikTok gaps.  
+4. Append Chartmetric playlist-placement alerts in real time → refine R/F/V for streaming superfans.
+
+Once the additional feeds are live, rerun the segmentation logic; update cohort sizes; and expand playbooks to TikTok and DSP environments.

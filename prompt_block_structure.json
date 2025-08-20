@@ -1,0 +1,124 @@
+{
+  "prompt_blocks": [
+    {
+      "blockTitle": "Audience Age-Tier Segmentation (#9)",
+      "blockContent": "Overlay IG/TikTok age shares with Apple Music vs Spotify listener age splits (last 90 days).\nCompute over/under-index vs the artist’s total by age bracket to find platform-age mismatches.\nOutput a table of mismatches and 3–5 recommended actions (content, playlisting, ads) per cohort.",
+      "blockTags": ["segmentation", "age-buckets", "platform-delta", "mismatch-detection"],
+      "blockID": 920900001
+    },
+    {
+      "blockTitle": "Superfan Cohort Identification (#5)",
+      "blockContent": "Score users on recency, frequency, and value (repeat listens, saves, playlist adds, merch/ticket buys, Discord/IG engagement).\nCluster cohorts; extract common traits and channels.\nDeliver cohort cards (size, behaviors, channels) and a playbook to nurture each cohort.",
+      "blockTags": ["superfans", "rfv-scoring", "cohorting", "retention"],
+      "blockID": 920500002
+    },
+    {
+      "blockTitle": "Demographic Skew Alerts (#17)",
+      "blockContent": "Compute gender/age share by platform (Spotify, Apple, TikTok, IG) vs artist baseline.\nTrigger alerts on notable skews and quantify impact.\nRecommend platform-specific targeting tweaks to rebalance or exploit the skew.",
+      "blockTags": ["demographics", "skew-alerts", "gender-age", "targeting"],
+      "blockID": 921700003
+    },
+    {
+      "blockTitle": "Geo-Hotspot Map (#4)",
+      "blockContent": "Join Shazam country/city tags with Spotify top-city streams; add regional marketing spend and YoY growth.\nFilter for markets with >50% YoY growth and <10% marketing spend.\nReturn top 5 market cards with map pins, entry tactics, and budget suggestions.",
+      "blockTags": ["geo", "emerging-markets", "shazam+spotify", "yoy-growth"],
+      "blockID": 920400004
+    },
+    {
+      "blockTitle": "Drop-Off Funnel Diagnostics (#10)",
+      "blockContent": "Build a listener funnel per track: first play → 30s completion → save → week-2 repeat.\nCompute stage attrition and highlight stages with >40% drop.\nProvide funnel charts and fixes (edits, intros, hooks, promos) by track/cluster.",
+      "blockTags": ["funnel", "attrition", "completion", "repeat-rate"],
+      "blockID": 921000005
+    },
+    {
+      "blockTitle": "Language & Lyric Sentiment Impact (#16)",
+      "blockContent": "Tag lyrics with sentiment/mood classes and correlate with save-rate, completion, and repeat across platforms.\nFlag over- and under-indexed moods.\nDeliver a matrix of mood × KPI plus a creative brief on winning/losing themes.",
+      "blockTags": ["lyrics", "sentiment", "mood-performance", "save-rate"],
+      "blockID": 921600006
+    },
+    {
+      "blockTitle": "Audience Affinity Themes (derived)",
+      "blockContent": "Extract fan affinities from bios, comments (NLP), followed pages/artists, and hashtag co-occurrence.\nTopic-model themes and cross with high-engagement posts to rank.\nOutput top 5 themes with example posts and recommended angles.",
+      "blockTags": ["affinities", "topic-modeling", "content-themes"],
+      "blockID": 929900007
+    },
+    {
+      "blockTitle": "Seasonality Sweet-Spots (#1)",
+      "blockContent": "Aggregate peak-day counts by month across charts and past release dates.\nCompute monthly z-scores; surface months with z > +1 as best release windows.\nProvide a calendar with rationale and comparable past wins.",
+      "blockTags": ["seasonality", "release-timing", "chart-peaks"],
+      "blockID": 920100008
+    },
+    {
+      "blockTitle": "Weekend vs Weekday Dynamics (#2)",
+      "blockContent": "Compare average rank changes of Friday releases vs non-Friday, controlling for genre/playlisting.\nFlag deltas >10% and quantify risk/variance.\nRecommend the optimal release day with supporting evidence.",
+      "blockTags": ["release-day", "friday-effect", "rank-delta"],
+      "blockID": 920200009
+    },
+    {
+      "blockTitle": "Release-Day Social Cadence (#13)",
+      "blockContent": "Cluster social post timestamps around release days vs D1–D7 streams.\nSimulate alternative cadences to maximize first-week outcomes.\nDeliver an hour-by-hour posting playbook for T-24h to T+72h per channel.",
+      "blockTags": ["social-cadence", "release-playbook", "first-week"],
+      "blockID": 921300010
+    },
+    {
+      "blockTitle": "Catalogue Revival Candidates (#15)",
+      "blockContent": "Detect tracks older than 24 months with >+30 Shazam rank increase in the last 60 days and positive streaming trend.\nPrioritize for re-promotion.\nProvide a shortlist with creatives, playlist targets, and budget plans.",
+      "blockTags": ["catalogue", "revival", "shazam-spike", "re-promo"],
+      "blockID": 921500011
+    },
+    {
+      "blockTitle": "DSP Editorial vs Algorithmic (#20)",
+      "blockContent": "Split streams by editorial vs algorithmic playlists using metadata.\nCompare decay curves (D30/D60), saves, and repeats to quantify long-tail.\nRecommend the optimal exposure mix and specific asks for editors/algorithmic seeding.",
+      "blockTags": ["editorial-vs-algo", "playlist-attribution", "long-tail"],
+      "blockID": 922000012
+    },
+    {
+      "blockTitle": "Social-to-Streaming Spike Attribution (derived)",
+      "blockContent": "Align social campaign/post timestamps to streaming time series and run an event study (0–3 day window).\nAttribute uplift to posts/campaigns; control for confounders where possible.\nOutput top converting post types and a replication checklist.",
+      "blockTags": ["attribution", "social→streams", "event-study"],
+      "blockID": 929900013
+    },
+    {
+      "blockTitle": "Discovery-to-Streaming Lift (#3)",
+      "blockContent": "Cross-correlate Shazam peaks with Spotify rank/stream spikes using 0–7 day lags.\nCompute viral conversion rates by market and track.\nMap effective pathways and provide an amplification playbook.",
+      "blockTags": ["discovery", "shazam↔spotify", "conversion"],
+      "blockID": 920300014
+    },
+    {
+      "blockTitle": "Playlist Crossover Opportunities (#7)",
+      "blockContent": "Identify playlists containing ≥2 tracks by {artist_name}; find recurring co-artists.\nBuild a co-appearance network and score audience overlap/fit.\nReturn a collaborator target list with expected uplift and intro angles.",
+      "blockTags": ["playlists", "co-occurrence", "collab-targets"],
+      "blockID": 920700015
+    },
+    {
+      "blockTitle": "TikTok Hook Efficiency (#8)",
+      "blockContent": "Align TikTok view-spike timestamps with the first derivative of Spotify stream curves.\nCompute mean uplift per 1M TikTok views by track and creative.\nSummarize hook best-practices and post timing guidance.",
+      "blockTags": ["tiktok", "uplift", "hook-testing"],
+      "blockID": 920800016
+    },
+    {
+      "blockTitle": "Tour Routing Optimizer (#11)",
+      "blockContent": "Weight cities by recent Shazam rank × Spotify listener count × ticket history.\nRank the top 15 cities for the next-year plan and propose venue tiers.\nProvide a sales forecast and routing rationale.",
+      "blockTags": ["touring", "city-ranking", "routing"],
+      "blockID": 921100017
+    },
+    {
+      "blockTitle": "Ad-Platform Allocation (#12)",
+      "blockContent": "Regress paid-social spend against incremental streams by platform/campaign.\nEstimate response curves and recommend the budget split where marginal CPA is lowest.\nDeliver an allocation table with ±20% budget scenarios.",
+      "blockTags": ["ads", "budget-split", "marginal-cpa"],
+      "blockID": 921200018
+    },
+    {
+      "blockTitle": "Collaboration Influence Scoring (#19)",
+      "blockContent": "Measure first-week stream uplift for features vs solo tracks, controlling for baseline.\nRank collaborators by average uplift with confidence intervals.\nRecommend high-impact partners and future feature strategy.",
+      "blockTags": ["collabs", "uplift-scoring", "features"],
+      "blockID": 921900019
+    },
+    {
+      "blockTitle": "Top Followers & Collab Prospects (derived)",
+      "blockContent": "Aggregate follower graphs by platform; compute influence and audience overlap.\nRank prospects by reach × affinity × engagement and dedupe across platforms.\nReturn a contact list with suggested pitch and content angle.",
+      "blockTags": ["influencers", "prospects", "outreach"],
+      "blockID": 929900020
+    }
+  ]
+}

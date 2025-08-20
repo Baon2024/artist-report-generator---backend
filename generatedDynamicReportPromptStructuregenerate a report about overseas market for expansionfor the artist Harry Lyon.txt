@@ -1,0 +1,28 @@
+# Overseas Market Expansion Report for Harry Lyon
+
+## Geo-Hotspot Map
+Focus: Identification of emerging markets and audience growth signals for Harry Lyon. Emphasis on streaming trends, discovery signals, and budget posture to highlight regions with significant potential for expansion. *TBD – requires platform data.*
+
+## Audience Age-Tier Segmentation
+Context: Overlay of Instagram and TikTok age shares with Apple Music and Spotify listener age splits for the last 90 days. Emphasis on identifying platform-age mismatches to optimize targeting and content strategy.
+
+## Superfan Cohort Identification
+Focus: Examination of superfans based on engagement metrics such as recency, frequency, and value. Context includes common traits and preferred channels, leading to strategies for nurturing these valuable audience segments.
+
+## Demographic Skew Alerts
+Focus: Analysis of gender and age distribution across major platforms compared to Harry Lyon’s overall audience. Context includes identifying notable skews and suggesting platform-specific adjustments to optimize reach or leverage demographic strengths.
+
+## Language & Lyric Sentiment Impact
+Emphasis: Correlation of lyrical sentiment and mood with key performance indicators like save-rate and repeat listens. Insights into the impact of lyrical themes on audience engagement and recommendations for creative direction.
+
+## Discovery-to-Streaming Lift
+Focus: Mapping the conversion from discovery (e.g., Shazam) to streaming increases across markets and tracks. Context includes effective pathways for audience growth and an amplification strategy for maximizing reach.
+
+## Playlist Crossover Opportunities
+Focus: Identification of playlist crossover potential by tracking co-appearances with other artists. Emphasis on collaborative opportunities to expand audience reach and engagement through strategic partnerships.
+
+## Tour Routing Optimizer
+Context: Evaluation of potential tour locations based on listener data and ticket history. Emphasis on identifying cities with the highest potential for successful tour stops, including venue recommendations and forecasted sales.
+
+## Ad-Platform Allocation
+Focus: Allocation of advertising resources across platforms to maximize incremental streams. Context involves optimizing budget split for effective audience acquisition while minimizing cost per acquisition.

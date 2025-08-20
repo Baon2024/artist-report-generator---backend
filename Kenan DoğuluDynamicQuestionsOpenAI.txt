@@ -1,0 +1,101 @@
+Core Collectif – Audience Insight Report  
+Artist: Kenan Doğulu  
+Primary market: Turkey (Istanbul–centred)  
+Positioning one-liner: “Female-skewed Turkish-pop nostalgia audience with TikTok-driven Gen-Z upside”
+
+────────────────────────
+A. Audience Behaviour & Segmentation
+────────────────────────
+
+1. Age-Tier overlay (Instagram vs TikTok) – Data point #9  
+   • Instagram (≈ 842 k followers) – 70 % F / 30 % M  
+     – 13-17 y: F 3.4 % | M 0.7 %  
+     – 18-24 y: F 17.9 % | M 5.5 %  
+     – 25-34 y: F 30.1 % | M 12.2 %   ← largest single slice  
+     – 35-44 y: F 13.9 % | M 7.1 %  
+     – 45-64 y: F 5.2 %  | M 4.1 %  
+
+   • TikTok (≈ 25 k followers) – 34 % F / 66 % M  
+     – 13-17 y: M 3.9 % | F 3.5 %  
+     – 18-24 y: M 28.3 % | F 20.3 %   ← largest  
+     – 25-34 y: M 22.1 % | F 7.7 %  
+     – 35-44 y: M 7.9 % | F 1.8 %  
+
+   Untapped cohort signal → Young-male TikTok base (18-24 M) is proportionally large yet tiny on Instagram; cross-promote IG Reels to convert.
+
+2. Super-fan cohort – Data point #5  
+   • 85 % of “likers” reside in Turkey; Istanbul alone ≈ 40 % of likes / 29 % of followers.  
+   • Gender: 76 % female within high-engagement cluster (vs 70 % baseline).  
+   • Age: 25-34 y = 42 % of all post-likes.  
+   • Interests / brand affinities: Apple, Starbucks, Zara, Netflix, Vodafone, major Istanbul football clubs (Galatasaray, Beşiktaş, Fenerbahçe).  
+   • Behaviour: comment with lyric quotes & 2000s concert memories; engagement rates >3–4 % on posts they touch (vs avg 0.7 %).
+
+3. Demographic-skew alerts – Data point #17  
+   • Platform gender flip: Instagram heavily female (70/30) while TikTok flips to male (34/66).  
+   • Age: core 25-34 dominates IG; core 18-24 dominates TikTok → craft differential content (nostalgia vs trend).
+
+4. Geo-hotspot map – Data point #4  
+   • Legacy core: Istanbul, Ankara, Izmir, Antalya (high absolute activity).  
+   • Emerging interest (metric: recent Shazam activity > Spotify baseline)  
+     1. Baku, Azerbaijan  
+     2. Berlin, Germany (Turkish diaspora)  
+     3. Cologne, Germany  
+     4. Tehran, Iran  
+     5. Amsterdam, Netherlands  
+   *Growth %, YoY marketing spend data not provided; list derived from Shazam upticks + diaspora logic.*
+
+5. Drop-off funnel diagnostics – Data point #10  
+   • No platform-level completion/skip data available → cannot quantify >40 % attrition stages. (Recommend accessing Spotify for Artists analytics.)
+
+6. Language & lyric-sentiment impact – Data point #16  
+   • Songs with melancholy / heartbreak themes are the ones repeatedly playlisted (“Yosun”, “Yaparım Bilirsin”) and drive saves in editorial lists → positive sentiment-to-engagement correlation.  
+   • Up-tempo nostalgia (e.g., “Durup Dururken”) also spikes when paired with summer playlists.  
+   • Content themes to lean into on socials: nostalgic anecdotes, heartbreak lyric snippets, Istanbul city-life visuals, coffee-culture & football references (match super-fan lifestyle affinities).
+
+────────────────────────
+B. Content & Release Strategy
+────────────────────────
+
+1. Seasonality sweet-spots – Data point #1  
+   • Historical peaks in June & July (z-score > +1) – albums historically chart highest in these months.  
+   • Recommendation: target late-Q2 / early-Q3 for headline singles or EPs.
+
+2. Weekend vs Weekday dynamics – Data point #2  
+   • Case study: “Durup Dururken”, Friday 24 Jul 2025 release, peaked #3 on “Yaz Hitleri 2025” & “DANS 2025”.  
+   • Friday drops outperform other-day releases on playlist entry and peak rank.
+
+3. Release-day social cadence – Data point #13  
+   • Actual post-timestamp data unavailable. Suggest provisional cadence:  
+     – T-3 d: teaser clip (TikTok & IG Reels, male 18-24 targeting)  
+     – T-0: 3-post burst (cover art, lyric reel, Spotify/Apple link)  
+     – T+2 d & T+7 d: behind-the-song & live acoustic to maintain algorithmic lift.
+
+4. Catalogue revival candidates – Data point #15  
+   • Tracks older than 24 m with recent Shazam lift:  
+     – “Yosun” (Shazam peak #3)  
+     – “Yaparım Bilirsin”  
+     – “Ara Beni Lütfen”  
+   • Action: create TikTok challenge or IG nostalgia reel series, bundle into “Kenan Classics” playlist push.
+
+5. DSP editorial vs algorithmic split – Data point #20  
+   • Editorial lists (e.g., “Hot Hits Türkiye”, “Yaz Hitleri 2025”) carry higher follower counts and drive longer-tail listening than personalized/algorithmic placements (fewer followers reported).  
+   • Strategy: maintain label/editor relations; pitch catalogue revivals to editorial curators first, then seed TikTok to unlock algorithmic uptick among Gen-Z males.
+
+────────────────────────
+C. Tactical To-Dos
+────────────────────────
+1. Set June/July 2026 single target; lock Friday release.  
+2. Pre-save campaign aimed at IG female 25-34 (nostalgic copy) + TikTok male 18-24 (trend sound).  
+3. Run geo-targeted ads in Baku, Berlin, Cologne and Tehran around catalogue revival playlist.  
+4. Develop “Kenan Story Time” reel series (coffee-shop acoustic + heartbreak lyric overlays) to feed super-fan interests.  
+5. Request detailed skip/completion analytics from label to plug Drop-off Funnel gap.
+
+────────────────────────
+Key Watch Metrics (next 90 days)
+────────────────────────
+• TikTok follower growth in 18-24 M segment  
+• Shazam tags in listed emerging cities  
+• Saves per listener on revived classics playlist  
+• Editorial playlist retention beyond week 4 post-release
+
+All findings above are drawn exclusively from the data points supplied in Q1–Q10.

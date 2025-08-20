@@ -1,0 +1,14 @@
+## Geo-Hotspot Map
+Focus: Identifying potential Asian markets for expansion by analyzing emerging markets and audience growth signals across cities and regions. Context includes streaming trends, discovery signals, and budget posture. *TBD – requires platform data.*
+
+## Demographic Skew Alerts
+Emphasis: Understanding the demographic distribution (gender/age) across platforms such as Spotify, Apple, TikTok, and Instagram compared to the artist's baseline. Identify notable skews and recommend platform-specific strategies to address or capitalize on these skews. *TBD – requires platform data.*
+
+## Superfan Cohort Identification
+Focus: Identifying and understanding superfans through analysis of recency, frequency, and value indicators such as repeat listens, saves, playlist additions, merchandise/ticket purchases, and social media engagement. Categorize these fans into cohorts to develop strategies for nurturing them. *TBD – requires platform data.*
+
+## Discovery-to-Streaming Lift
+Context: Examining the relationship between discovery spikes (e.g., Shazam) and subsequent increases in streaming activity on platforms like Spotify. Map effective pathways for maximizing conversions from discovery to streaming. *TBD – requires platform data.*
+
+## Tour Routing Optimizer
+Emphasis: Optimizing tour routing by prioritizing cities based on recent Shazam rankings, Spotify listener counts, and historical ticket sales. Develop a plan for selecting venue tiers and estimating sales forecasts for potential tour stops. *TBD – requires platform data.*

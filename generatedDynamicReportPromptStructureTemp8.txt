@@ -1,0 +1,38 @@
+# Artist Audience Intelligence & Growth Blueprint: Bertie Blackman
+
+## 1. Overview
+Short summary of overall patterns, growth arcs, and platform behaviors.
+
+## 2. Key Segments
+### A. Audience Age-Tier Segmentation
+- Overlay IG/TikTok age shares with Apple Music vs Spotify listener age splits (last 90 days).
+- Compute over/under-index vs the artist’s total by age bracket to find platform-age mismatches.
+- Output a table of mismatches and 3–5 recommended actions (content, playlisting, ads) per cohort.
+
+### B. Superfan Cohort Identification
+- Score users on recency, frequency, and value (repeat listens, saves, playlist adds, merch/ticket buys, Discord/IG engagement).
+- Cluster cohorts; extract common traits and channels.
+- Deliver cohort cards (size, behaviors, channels) and a playbook to nurture each cohort.
+
+### C. Geo-Hotspot Map
+- Join Shazam country/city tags with Spotify top-city streams; add regional marketing spend and YoY growth.
+- Filter for markets with >50% YoY growth and <10% marketing spend.
+- Return top 5 market cards with map pins, entry tactics, and budget suggestions.
+
+## 3. Strategic Observations
+- Opportunity gaps
+- Surprising over/under performance
+- Hypotheses
+
+## 4. Marketing Recommendations
+### A. Platform Strategy
+[List of 3, each with logic and examples]
+
+### B. Content Types to Emphasize
+[List of 3, with reasoning per segment]
+
+### C. Influencer/Partnership Strategy
+[2 ideas with audience alignment logic]
+
+## 5. Big Bet Growth Campaign
+Title + concept + rationale.

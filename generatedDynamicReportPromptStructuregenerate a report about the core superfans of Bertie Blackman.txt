@@ -1,0 +1,10 @@
+# Core Superfans of Bertie Blackman
+
+## Superfan Cohort Identification
+Focus: Identify and understand core superfans by analyzing user engagement through recency, frequency, and value metrics such as repeat listens, saves, playlist additions, merchandise, ticket purchases, and social media interactions. Context involves clustering these users into cohorts to highlight common traits and preferred channels. Deliverables include detailed cohort cards encompassing size, behaviors, and channels, along with a playbook designed to nurture each cohort effectively.
+
+## Audience Age-Tier Segmentation
+Focus: Examine age demographics across key platforms by overlaying age shares from Instagram and TikTok with age splits from Apple Music and Spotify listeners over the last 90 days. Context involves identifying over- and under-indexed age brackets in relation to Bertie Blackman's total audience. Deliverables include a table showcasing age mismatch insights and recommended actions for content creation, playlist placements, and advertising strategies tailored to each age cohort.
+
+## Demographic Skew Alerts
+Focus: Analyze and compare gender and age distribution across platforms like Spotify, Apple Music, TikTok, and Instagram against Bertie Blackman's baseline audience demographics. Context involves identifying notable demographic skews and assessing their potential impact. Deliverables include platform-specific targeting adjustments to either rebalance or capitalize on these skews for enhanced audience engagement.

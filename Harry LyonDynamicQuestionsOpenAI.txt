@@ -1,0 +1,42 @@
+Harry Lyon – Audience Demographic Snapshot  
+(Only TikTok and Instagram data are currently available; no Apple Music, Spotify, YouTube, or baseline-fan figures were returned.)
+
+1. Audience Age-Tier Segmentation  
+   1.1 TikTok followers (Chartmetric, latest snapshot)  
+       • 13–17 yrs: 8 %  
+       • 18–24 yrs: 57 %  
+       • 25–34 yrs: 26 %  
+       • 35–44 yrs: 6 %  
+       • 45–64 yrs: 3 %  
+       • 65 + yrs: ~0 %  
+       → 65 % of his TikTok base is under 25; 91 % is under 35.  
+
+   1.2 Instagram followers (Chartmetric, latest snapshot)  
+       • 13–17 yrs: 4.8 %  
+       • 18–24 yrs: 47.8 %  
+       • 25–34 yrs: 39.8 %  
+       • 35–44 yrs: 6.2 %  
+       • 45–64 yrs: 1.4 %  
+       • 65 + yrs: ~0 %  
+       → 52.6 % of his IG base is under 25; 92.4 % is under 35.
+
+   1.3 Cross-platform age observations  
+       • Both platforms are extremely youth-weighted: ~9 in 10 followers are <35.  
+       • TikTok skews meaningfully younger: +12 pp in the 13–24 bucket vs. Instagram (65 % vs. 52.6 %).  
+       • Instagram hosts a noticeably larger 25–34 cohort (+13 pp vs. TikTok).
+
+2. Demographic Skew Alerts  
+   2.1 Gender  
+       • TikTok: 63 % female / 37 % male.  
+       • Instagram: 70 % female / 30 % male.  
+       → Both channels lean female, but Instagram is the most female-skewed (-7 pp male share vs. TikTok).  
+       Targeting implication: content or ads aimed at male fans may gain more traction on TikTok; female-focused messaging should perform best on Instagram.
+
+   2.2 Age  
+       • Younger Gen-Z (13–24) over-indexes on TikTok relative to Instagram.  
+       • Older-millennial (25–34) fans are concentrated on Instagram.  
+       Targeting implication: release teasers, short-form trends, or UGC campaigns on TikTok; use Instagram for slightly more mature lifestyle, merch, or ticketing pushes.
+
+3. Data Gaps / Next Steps  
+   • No demographic data returned for Spotify, Apple Music, or YouTube, so platform-wide comparisons remain incomplete.  
+   • If/when those services publish listener-age or gender splits, revisit to build a holistic 4-platform matrix.
