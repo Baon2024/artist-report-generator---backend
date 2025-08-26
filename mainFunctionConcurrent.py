@@ -1118,53 +1118,56 @@ async def mainFunctionConcurrent(chosen_artist, purpose_outline):
         print(f"starting questions {index + 1}")
 
         overall_answers2[index] = {"Thoughts": "", "Answer": ""}
+        nonlocal overall_answers
+        thoughts_chunks = []
+        answer = ""
 
-        #create/re-create workflow with new question as user_msg
+        # create/re-create workflow with new question as user_msg
         workflow = AgentWorkflow(
-        agents=[similarity_agent, social_media_data_agent, manager_agent, streaming_chart_agent],
-        root_agent=manager_agent.name,
-        initial_state={"working_notes": {}, "user question": user_msg, "users language": "English"}
+            agents=[similarity_agent, social_media_data_agent, manager_agent, streaming_chart_agent],
+            root_agent=manager_agent.name,
+            initial_state={
+                "working_notes": {},
+                "user question": user_msg,
+                "users language": "English"
+            }
         )
-        
+
         # run the workflow with context
         ctx = Context(workflow)
-
-
-
 
         handler = workflow.run(user_msg=user_msg, ctx=ctx)
         current_agent = None
         current_tool_calls = ""
 
-        
-        
         async for event in handler.stream_events():
             if (
                 hasattr(event, "current_agent_name")
                 and event.current_agent_name != current_agent
-               ):
-               current_agent = event.current_agent_name
-               print(f"\n{'='*50}")
-               print(f"🤖 Agent: {current_agent}")
-               print(f"{'='*50}\n")
-            
+            ):
+                current_agent = event.current_agent_name
+                print(f"\n{'='*50}")
+                print(f"🤖 Agent: {current_agent}")
+                print(f"{'='*50}\n")
+
             elif isinstance(event, AgentOutput):
                 content = event.response.content.strip()
                 print("📤 Output:", content)
 
-        # New logic: extract Thought and Answer from any position
+                # New logic: extract Thought and Answer from any position
                 clean_answer_combined = ""
                 thought, answer = None, None
-                
+
                 if "Thought:" in content:
                     if "Answer:" in content:
                         thought = content.split("Thought:")[1].split("Answer:")[0].strip()
-                    
                     else:
                         thought = content.split("Thought:")[1].strip()
                         overall_answers2[index]["Thoughts"] += "\n" + thought
                         clean_answer_combined += f"🧠 Thought: {thought}\n"
-                    
+                    if thought:
+                        thoughts_chunks.append(thought)
+
                 if "Answer:" in content:
                     answer = content.split("Answer:")[-1].strip()
                     overall_answers2[index]["Answer"] = answer
@@ -1173,14 +1176,13 @@ async def mainFunctionConcurrent(chosen_artist, purpose_outline):
                 if clean_answer_combined:
                     question_header = f"\n### Q{index + 1}: {user_msg}\n"
                     overall_answers += question_header + clean_answer_combined + "\n"
-                
+
                 # If either Thought or Answer was captured, append to overall_answers
-       
                 if event.tool_calls:
                     print(
                         "🛠️  Planning to use tools:",
                         [call.tool_name for call in event.tool_calls],
-                        )
+                    )
                 elif isinstance(event, ToolCallResult):
                     print(f"🔧 Tool Result ({event.tool_name}):")
                     print(f"  Arguments: {event.tool_kwargs}")
@@ -1188,12 +1190,21 @@ async def mainFunctionConcurrent(chosen_artist, purpose_outline):
                 elif isinstance(event, ToolCall):
                     print(f"🔨 Calling Tool: {event.tool_name}")
                     print(f"  With arguments: {event.tool_kwargs}")
-        
+
         state = await ctx.store.get("state")
         all_states[f"Q{index+1}"] = {
             "question": user_msg,
             "state": state
-            }
+        }
+
+        return {
+            "index": index,
+            "question": user_msg,
+            "thoughts": "\n".join(thoughts_chunks).strip(),
+            "answer": (answer or "").strip(),
+            "state": state,
+        }
+
     
 
     async def bounded_run(index: int, user_msg: str):
@@ -1205,8 +1216,12 @@ async def mainFunctionConcurrent(chosen_artist, purpose_outline):
         asyncio.create_task(bounded_run(i, q))
         for i, q in enumerate(questions_to_ask)
     ]
+
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    print(f"value of tasks is: {tasks}")
         
     print(f"overall_answers is: {overall_answers}")
+    print(f"overall_answers2 is: {overall_answers}")
 
     #final_state = await ctx.store.get("state")
         
