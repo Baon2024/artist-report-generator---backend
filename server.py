@@ -9,7 +9,7 @@ from anyio import to_thread  # pip install anyio
 import os
 from openai import OpenAI
 from dynamic_prompt_structure import generate_dynamic_report_prompt_structure
-from googleSheetsMain import get_credentials
+from googleSheetsMain import get_credentials, get_credentials_service
 from googleapiclient.discovery import build
 
 
@@ -64,7 +64,9 @@ async def report_google_doc(payload: GeneratedReport) -> Any:
     print(f"report_focus is: {report_focus}")
 
     #need to create google doc, get credentials first
-    creds = get_credentials()
+    #creds = get_credentials()
+
+    creds = get_credentials_service()
 
     # Use Docs API
     docs = build("docs", "v1", credentials=creds)
