@@ -48,8 +48,20 @@ def get_credentials_service():
         raise RuntimeError("Set GOOGLE_APPLICATION_CREDENTIALS to your secret file path on Render")
     if not os.path.isfile(path):
         raise RuntimeError(f"Credentials file not found at {path}")
+    
+    subject = os.getenv("GOOGLE_IMPERSONATE_SUBJECT")  # e.g. "joejoe@inaugural.ai"
     creds = service_account.Credentials.from_service_account_file(path, scopes=SCOPES)
+
     print("Using service account:", creds.service_account_email)
+
+    if subject:
+        creds = creds.with_subject(subject)
+        print("Impersonating:", subject)
+    else:
+        # Optional: fail fast to avoid “created in SA drive you can’t see” mistakes
+        raise RuntimeError(
+            "Set GOOGLE_IMPERSONATE_SUBJECT to a Workspace user email to enable domain-wide delegation."
+        )
     return creds
 
 def get_credentials_service3():
