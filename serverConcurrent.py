@@ -12,6 +12,7 @@ from openai import OpenAI
 from dynamic_prompt_structure import generate_dynamic_report_prompt_structure
 from googleSheetsMain import get_credentials, get_credentials_service
 from googleapiclient.discovery import build
+from get_template_prompt_structure import get_template_prompt_structure#, report_templates
 
 
 load_dotenv()
@@ -27,7 +28,7 @@ app = FastAPI()
 
 # Only allow your frontends
 origins = [
-    "http://localhost:3009",
+    "http://localhost:3010",
     "https://artist-report-generator-frontend.vercel.app",
     "https://reverb.corecollectif.com",
 ]
@@ -141,19 +142,13 @@ async def report_generator(payload: ReportRequest) -> Any:
 
 
 
-    #generate dynamic prompt, based on prompt blocks
+    #select prompt structure template, using report_focus
+    prompt_structure = get_template_prompt_structure(report_focus, chosen_artist)
     
+
+    #return prompt_structure
 
    
-
-    report_question = report_focus + f"for the artist {chosen_artist}"
-    print(f"report_question is: {report_question}")
-
-    #add as imported function here
-    prompt_structure = generate_dynamic_report_prompt_structure(report_question)
-
-    #pass down prompt structure as function param, then need to add overall_answers to prompt structure in mainFunction.py, before sending to model
-    
 
     try:
         # Run your (blocking/async-mixed) pipeline in a thread
@@ -170,7 +165,7 @@ async def report_generator(payload: ReportRequest) -> Any:
 
 if __name__ == "__server__":
     import uvicorn
-    port = int(os.getenv("PORT", "3011"))
+    port = int(os.getenv("PORT", "3012"))
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
 
-# Run: uvicorn serverConcurrent:app --host 0.0.0.0 --port 3011 --reload
+# Run: uvicorn serverConcurrent:app --host 0.0.0.0 --port 3012 --reload
