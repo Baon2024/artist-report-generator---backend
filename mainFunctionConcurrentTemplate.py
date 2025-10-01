@@ -68,11 +68,52 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 #)#should be able to pass as tool?
 
 
+#i need to check that it gets new token on exiry time
+custom_cache =  {}
 
-@lru_cache(maxsize=1)
+from datetime import datetime, timedelta
+
 def get_chartmetric_access_token_cached() -> str | None:
+
+    #if exiry time is within 1 min of current time, or custom_cache token does not exist
+    if "expiry_date_time" not in custom_cache or "access_token" not in custom_cache:
+        print("🔑 Fetching new Chartmetric token")
+        access_token, expiry_time = get_chartmetric_access_token_with_refresh()
+        
+        custom_cache["access_token"] = access_token
+        current_date = datetime.now()
+        new_expiry_date_time = current_date + timedelta(seconds=expiry_time)
+        print(f"🔑 new expiry time is {new_expiry_date_time}")
+        
+        custom_cache["expiry_date_time"] = new_expiry_date_time
+        return access_token
+
+    elif custom_cache["expiry_date_time"] - datetime.now() <= timedelta(seconds=30):
+        print("🔑 Fetching new Chartmetric token")
+        access_token, expiry_time = get_chartmetric_access_token_with_refresh()
+        
+        custom_cache["access_token"] = access_token
+        current_date = datetime.now()
+        new_expiry_date_time = current_date + timedelta(seconds=expiry_time)
+        print(f"🔑 new expiry time is {new_expiry_date_time}")
+        
+        custom_cache["expiry_date_time"] = new_expiry_date_time
+        return access_token
+
+    else:
+        print("🔑 Returning existing Chartmetric token")
+        return custom_cache["access_token"]
+    #fetch new token with function
+    #then store token, and exirty time
+    #else, return existing token
+
+
+
     print("🔑 Fetching new Chartmetric token")
-    return get_chartmetric_access_token_with_refresh()
+    #return get_chartmetric_access_token_with_refresh()
+
+
+
 
 #@function_tool
 def get_chartmetric_access_token_with_refresh() -> str or None:
@@ -106,10 +147,11 @@ def get_chartmetric_access_token_with_refresh() -> str or None:
             #current_state["working_notes"] = {}
         
         access_token = data.get('token')# This is your bearer token for future API calls
+        expiry_time = data.get('expires_in')
         #current_state["working_notes"]["access_token"] = access_token
 
         #await ctx.set("state", current_state)
-        return access_token
+        return access_token, expiry_time
 
     except Exception as e:
         print("Error retrieving Chartmetric access token:", str(e))
