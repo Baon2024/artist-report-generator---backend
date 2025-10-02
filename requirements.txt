@@ -19,7 +19,8 @@ httpx  # optional, but nice if you later swap from requests
 
 # Compatible versions
 openai==1.109.1
-llama-index==0.14.3
+llama-index==0.13.6
+llama-index-core==0.13.6
 llama-index-llms-openai==0.5.1
 
 
