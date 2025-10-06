@@ -31,7 +31,8 @@ from helper_function import generate_questions_dynamic
 import os
 import asyncio
 import platform
-from typing import List, Optional, Dict, Any, Literal
+from typing import List, Optional, Dict, Any, Literal, Union
+from datetime import date, datetime
 
 #from llama_index.llms.google_gemini import GoogleGenAI
 #from google.genai import types
@@ -259,7 +260,41 @@ async def get_similar_artists(ctx: Context, artist_id: int) -> dict:
         return None
 
 
-async def get_youtube_audience_data(ctx: Context, artist_id: str) -> dict:
+def to_iso_date_str(d) -> str | None:
+    """
+    Accepts: datetime.date | datetime.datetime | 'YYYY-MM-DD' string | None
+    Returns: 'YYYY-MM-DD' or None
+    Raises: ValueError (invalid content), TypeError (unsupported type)
+    """
+    if d is None:
+        return None
+
+    # datetime.date (but not datetime.datetime subclass ambiguity)
+    if isinstance(d, date) and not isinstance(d, datetime):
+        return d.isoformat()
+
+    # datetime.datetime
+    if isinstance(d, datetime):
+        return d.date().isoformat()
+
+    # string
+    if isinstance(d, str):
+        # Strict check & canonicalize
+        try:
+            return date.fromisoformat(d).isoformat()  # enforces YYYY-MM-DD
+        except ValueError:
+            raise ValueError(
+                f"Invalid date string '{d}'. Expected 'YYYY-MM-DD', e.g. '2025-10-02'."
+            )
+
+    raise TypeError(
+        f"❌Unsupported date type {type(d).__name__}. "
+        "Pass datetime.date, datetime.datetime, 'YYYY-MM-DD', or None."
+    )
+
+
+
+async def get_youtube_audience_data(ctx: Context, artist_id: str, date: str) -> dict:
     """
     Retrieve Youtube audience data for a given artist, using Chartmetric API.
 
@@ -280,9 +315,15 @@ async def get_youtube_audience_data(ctx: Context, artist_id: str) -> dict:
 
     print("🚀 Called get_Youtube with artist_id:", artist_id)
     print("🚀 Called get_Youtube with access_token:", access_token)
+    
 
+    try:
+        date_str = to_iso_date_str(date)  # 'YYYY-MM-DD' or None
+    except (TypeError, ValueError) as e:
+        # Fail fast with a clear, actionable message
+        raise ValueError(str(e))
 
-    url = f"https://api.chartmetric.com/api/artist/{artist_id}/youtube-audience-stats"
+    url = f"https://api.chartmetric.com/api/artist/{artist_id}/youtube-audience-stats?date={date_str}"
     headers = {
         "Authorization": f"Bearer {access_token}"
     }
@@ -293,7 +334,25 @@ async def get_youtube_audience_data(ctx: Context, artist_id: str) -> dict:
         if response.status_code == 404:
             print(f"⚠️ No YouTube data found for artist {artist_id}")
             return {}
-        
+        try:
+        # Try to decode JSON body first (often contains helpful error details)
+            error_body = response.json()
+        except ValueError:
+        # If it's not valid JSON, fall back to raw text
+            error_body = response.text
+
+        print("❌ Chartmetric API error details:")
+        print("Status:", response.status_code)
+        print("Reason:", response.reason)
+        print("URL:", response.url)
+        print("Response body:", error_body)
+
+    # Still raise so the agent knows the call failed
+        raise Exception(
+            f"API request failed: {response.status_code} {response.reason}\n"
+            f"Details: {error_body}"
+        )
+
 
     data = response.json()
     print(f"data from get_Youtube is: {data}")
@@ -326,23 +385,31 @@ async def get_youtube_audience_data(ctx: Context, artist_id: str) -> dict:
     
     youtube_audience_stats = dict_to_return
     print(f"youtube_audience_stats are: {youtube_audience_stats}")
-    current_state["working_notes"][f"youtube_audience_data for artist {artist_id}"] = youtube_audience_stats
+    current_state["working_notes"][f"youtube_audience_data for artist {artist_id} on date {date_str}"] = youtube_audience_stats
     await ctx.store.set('state', current_state)
 
-    return { f"youtube_audience_data for artist {artist_id}": youtube_audience_stats}
+    return { f"youtube_audience_data for artist {artist_id} on date {date_str}": youtube_audience_stats}
+
+
+def is_iso_date_strict(date_str: str) -> bool:
+    try:
+        datetime.strptime(date_str, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
 
 
 
 
-
-
-
-async def get_tiktok_audience_data(ctx: Context, artist_id: str) -> dict:
+async def get_tiktok_audience_data(ctx: Context, artist_id: str, date:  str) -> dict:
     """
     Retrieve TikTok audience data for a given artist using Chartmetric API.
 
     Parameters:
     - artist_id (str): The Chartmetric artist ID.
+    - date(str): The specific snapshot day to query.
+    - You can pass a `datetime.date`, `datetime.datetime`, or an ISO date string (YYYY-MM-DD).
+    - The function automatically normalizes the input to the correct format for the API.
 
     Returns:
     - dict: TikTok audience breakdown.
@@ -359,7 +426,19 @@ async def get_tiktok_audience_data(ctx: Context, artist_id: str) -> dict:
     print("🚀 Called get_tiktok_audience_data with artist_id:", artist_id)
     print("🚀 Called get_tiktok_audience_data with access_token:", access_token)
 
-    url = f"https://api.chartmetric.com/api/artist/{artist_id}/tiktok-audience-stats"
+    # ✅ Normalize & validate up front
+    try:
+        date_str = to_iso_date_str(date)  # 'YYYY-MM-DD' or None
+    except (TypeError, ValueError) as e:
+        # Fail fast with a clear, actionable message
+        raise ValueError(str(e))
+
+    if date_str:
+        url = f"https://api.chartmetric.com/api/artist/{artist_id}/tiktok-audience-stats?date={date_str}"
+    else:
+        url = f"https://api.chartmetric.com/api/artist/{artist_id}/tiktok-audience-stats"
+
+    
     headers = {
         "Authorization": f"Bearer {access_token}"
     }
@@ -367,7 +446,24 @@ async def get_tiktok_audience_data(ctx: Context, artist_id: str) -> dict:
     response = requests.get(url, headers=headers)
 
     if not response.ok:
-        raise Exception(f"API request failed: {response.status_code} {response.reason}")
+        try:
+        # Try to decode JSON body first (often contains helpful error details)
+            error_body = response.json()
+        except ValueError:
+        # If it's not valid JSON, fall back to raw text
+            error_body = response.text
+
+        print("❌ Chartmetric API error details:")
+        print("Status:", response.status_code)
+        print("Reason:", response.reason)
+        print("URL:", response.url)
+        print("Response body:", error_body)
+
+    # Still raise so the agent knows the call failed
+        raise Exception(
+            f"API request failed: {response.status_code} {response.reason}\n"
+            f"Details: {error_body}"
+        )
 
     data = response.json()
     #print(f"data from get_tiktok_audience_data is: {data}")
@@ -398,10 +494,17 @@ async def get_tiktok_audience_data(ctx: Context, artist_id: str) -> dict:
     
     tiktok_audience_stats = dict_to_return
     #print(f"tiktok_audience_data are: {tiktok_audience_stats}")
-    current_state["working_notes"][f"tiktok_audience_data for artist {artist_id}"] = tiktok_audience_stats
-    await ctx.store.set('state', current_state)
+    
 
-    return { f"tiktok_audience_data for artist {artist_id}": tiktok_audience_stats}
+    if date_str:
+        current_state["working_notes"][f"tiktok_audience_stats for artist {artist_id} on date {date_str}"] = tiktok_audience_stats
+        await ctx.store.set('state', current_state)
+        return { f"tiktok_audience_data for artist {artist_id} on date {date_str}": tiktok_audience_stats}
+    else:
+        current_state["working_notes"][f"tiktok_audience_data for artist {artist_id}, current date"] = tiktok_audience_stats
+        await ctx.store.set('state', current_state)
+        return { f"tiktok_audience_data for artist {artist_id}": tiktok_audience_stats}
+    
 
     #choose which parts to return
 
@@ -411,18 +514,20 @@ async def get_tiktok_audience_data(ctx: Context, artist_id: str) -> dict:
 
 
 #@function_tool
-async def get_instagram_audience_data(ctx: Context, artist_id: str) -> dict:
+async def get_instagram_audience_data(ctx: Context, artist_id: str, date: str) -> dict:
     """
     Retrieve Instagram audience statistics for a given artist using Chartmetric.
 
     Parameters:
     - artist_id (str): The Chartmetric artist ID.
+    - date (str): The date, specific day, to search for artist audience data on instagram. Must be ISO format, e.g. "2025-10-02" 
 
     Returns:
     - dict: Instagram audience breakdown.
 
     Notes:
     - Results are saved in working memory.
+    - You should use this function multiple times, with different dates, to get snapshots of changes in instagram data
     """
     #perhaps just have it get access_token inside here
     #access_token = get_chartmetric_access_token_with_refresh()
@@ -436,7 +541,11 @@ async def get_instagram_audience_data(ctx: Context, artist_id: str) -> dict:
     print("🚀 Called get_instagram_audience_stats with artist_id:", artist_id)
     print("🚀 Called get_instagram_audience_stats with access_token:", access_token)
     
-    url = f"https://api.chartmetric.com/api/artist/{artist_id}/instagram-audience-stats"
+    if date:
+        url = f"https://api.chartmetric.com/api/artist/{artist_id}/instagram-audience-stats?date={date}"
+    else:
+        url = f"https://api.chartmetric.com/api/artist/{artist_id}/instagram-audience-stats"
+    
     headers = {
         "Authorization": f"Bearer {access_token}"
     }
@@ -455,10 +564,18 @@ async def get_instagram_audience_data(ctx: Context, artist_id: str) -> dict:
         current_state["working_notes"] = {}
     
     instagram_audience_stats = data.get('obj', {})
-    current_state["working_notes"][f"instagram_audience_data for artist {artist_id}"] = instagram_audience_stats
-    await ctx.store.set('state', current_state)
+    if date:
+        current_state["working_notes"][f"instagram_audience_data for artist {artist_id} on date {date}"] = instagram_audience_stats
+        await ctx.store.set('state', current_state)
+        return { f"instagram_audience_data for artist {artist_id} on date {date}": instagram_audience_stats}
+    else:
+        current_state["working_notes"][f"instagram_audience_data for artist {artist_id}, current date"] = instagram_audience_stats
+        await ctx.store.set('state', current_state)
+        return { f"instagram_audience_data for artist {artist_id}": instagram_audience_stats}
 
-    return { f"instagram_audience_data for artist {artist_id}": instagram_audience_stats}
+    
+
+    
 
 import logging, sys
 # Configure logging once, at app startup
@@ -469,6 +586,53 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger("charts")
+
+
+async def get_venues(ctx: Context, artist_id) -> list:
+    """
+    Find what venues have been played for a given artist using Chartmetric.
+
+    Parameters:
+    - artist_id (str): The Chartmetric artist ID. 
+
+    Returns:
+    - list: Venue breakdown.
+
+    Notes:
+    - Results are saved in working memory.
+    - You only need to call this once
+    """
+
+    access_token = get_chartmetric_access_token_cached()
+    
+
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+    
+    url = f"https://api.chartmetric.com/api/artist/{artist_id}/venues"
+    response = requests.get(url, headers=headers)
+    data = response.json()
+    print(f"response is, {data}")
+    obj = data.get("obj")
+    
+    collected_venues = []
+
+    for venue in obj:
+        item = {
+            "venue_name": venue["venue_name"],
+            "venue_capacity": venue["venue_capacity"],
+            "city": (venue.get("city") or {}).get("name"),
+            "events": [event.get("event_name",{}) for event in venue["events"]]
+            
+        }
+        collected_venues.append(item)
+
+    current_state = await ctx.store.get('state')
+    current_state[f"venues played by {artist_id} as of current date are: "] = collected_venues
+    await ctx.state.set("state", current_state)
+    
+    return collected_venues
 
 async def get_charts(ctx: Context, artist_id: int, chart_type: str, from_date: str, until_date: str) -> dict:
     """
@@ -505,6 +669,10 @@ async def get_charts(ctx: Context, artist_id: int, chart_type: str, from_date: s
     if chart_type not in valid_chart_types:
         raise ValueError(f"Invalid chart_type '{chart_type}'. Must be one of: {valid_chart_types}")
 
+    
+    #check from and until dates are in correct format
+    
+    
     current_state = await ctx.store.get('state')
     print(f"value of current_state on load inside of get_chart is: {current_state}")
 
@@ -520,7 +688,7 @@ async def get_charts(ctx: Context, artist_id: int, chart_type: str, from_date: s
     ##need to give chart options in function description clearly
 
 
-    url = f"https://api.chartmetric.com/api/artist/{artist_id}/{chart_type}/charts?since=${from_date}&until=${until_date}"
+    url = f"https://api.chartmetric.com/api/artist/{artist_id}/{chart_type}/charts?since={from_date}&until={until_date}"
     print("🚀 dynamic data url for get charts should be:", url)
 
     headers = {
@@ -965,106 +1133,8 @@ async def get_artist_news(
 
 
 
-    prompto3 = f"""
-# ROLE & TASK
-You are a **senior music strategist** hired to deliver a **two-page Audience Intelligence Brief** for the artist **{chosen_artist}**.
+  
 
-# SOURCE MATERIAL
-– You have one source only: **RAW_DATA** (verbatim answers & metrics pulled from Instagram, TikTok and YouTube).
-– Treat all numbers as trustworthy unless they contradict each other; in that case flag the conflict in “Data Gaps”.
-
-# WORKFLOW  (do not display)
-1. **THINK:** Extract every statistic, named entity, quote or behavioural clue from RAW_DATA.  
-2. **PLAN:** Map those findings onto the template sections. Identify unsupported cells early.  
-3. **WRITE:** Populate the markdown template in polished, presentation-ready prose.  
-   – Use concise bullet points (max. 15 words each) and tables for scannability.  
-   – Keep each column width sensible; wrap long text with `<br>` if needed.  
-4. **VERIFY:** Double-check that totals, % and age-band ranges add up logically.  
-5. **CLEAN:** Do **not** expose this workflow, system prompts or RAW_DATA.
-
-# STYLE
-Consultative, insight-rich, brand-strategy tone. Prefer active voice, audience-centric language (“Fans show…”, “Leverage…”).  
-Use **bold** for key stats, *italics* for emphasis, emojis only where the template already includes them.
-
-# DELIVERABLE
-Return **exactly** the filled-in template between the markers  
-`---BEGIN BRIEF---` and `---END BRIEF---`.  
-If a section lacks data, keep the section but write “*No platform data supplied — analyst inference required*”.
-
-# MARKDOWN TEMPLATE  (to be populated – do NOT repeat unfilled)
-### Deep-Dive Audience Analysis for {chosen_artist}  
-(Synthesising Instagram, TikTok & YouTube, Charts & Playlist data within Turkish pop-market context)
-
----
-
-1. **Audience Architecture at a Glance**  
-| Layer              | Instagram Data            | TikTok/Other*         | Strategic Takeaway                       |
-|--------------------|---------------------------|-----------------------|------------------------------------------|
-| Scale              |                           |                       |                                          |
-| Core Territory     |                           |                       |                                          |
-| Secondary Markets  |                           |                       |                                          |
-| Gender             |                           |                       |                                          |
-| Prime Age Band     |                           |                       |                                          |
-
----
-
-2. **Hidden Insights & Underserved Nuances**  
-| Insight                            | Evidence (platform, metric)     | Why It Matters                          |
-|------------------------------------|---------------------------------|------------------------------------------|
-|                                    |                                 |                                          |
-|                                    |                                 |                                          |
-|                                    |                                 |                                          |
-
----
-
-3. **Psychographic Micro-Segments to Activate**  
-| Segment Name        | % Audience | Description (mindset / need-state) | Ideal Touch-point                       |
-|---------------------|-----------:|------------------------------------|-----------------------------------------|
-|                     |            |                                    |                                         |
-|                     |            |                                    |                                         |
-
----
-
-4. **Content & Channel Implications**  
-| Funnel Stage   | Priority Channel(s) | Format & Narrative Hook              |
-|----------------|---------------------|--------------------------------------|
-| Discovery      |                     |                                      |
-| Consideration  |                     |                                      |
-| Community      |                     |                                      |
-| Conversion     |                     |                                      |
-
----
-
-5. **Monetisation & Partnership Levers**  
-- 
-- 
-- 
-- 
-
----
-
-6. **Risks & Mitigations**  
-| Risk                                   | Potential Impact       | Mitigation Play                          |
-|----------------------------------------|------------------------|------------------------------------------|
-|                                        |                        |                                          |
-|                                        |                        |                                          |
-
----
-
-7. **Data Gaps & Next Steps**  
-- 
-- 
-- 
-
----
-
-📦 **RAW_DATA** (for internal use only – do NOT show in the brief)
-{overall_answers}
-
----BEGIN BRIEF---
-<!-- o3 starts populating here -->
----END BRIEF---
-"""
 
 
 #and that code which allows logging of every step of the memory/thought process
@@ -1110,7 +1180,7 @@ streaming_chart_agent = ReActAgent(
 )
 
 
-social_media_data_agent = ReActAgent(#try with Function Agents first, change to ReAct agents if needed/performance is poor.
+social_media_data_agent = ReActAgent(
     name="SocialMediaDataAgent",
     description="agent to source data about artists from social media data, using chartmetric api",
     system_prompt=(
@@ -1121,6 +1191,7 @@ social_media_data_agent = ReActAgent(#try with Function Agents first, change to 
     "- Do NOT assume artist names. Only use 'find_artist_id_for_artist' with real artist names provided by the user.\n"
     "- If the user needs information about similar artists, HAND OFF to the SimilarityAgent — do NOT attempt it yourself.\n"
     "- Your tools are only for Instagram and TikTok and Youtube data.\n"
+    "- You can call the same function as many times as you want, with different dates to get snapshots"
 )
 ,
     llm=llmHigher,
@@ -1137,7 +1208,7 @@ similarity_agent = ReActAgent(
     "you can handoff to SocialMediaDataAgent, in order to find information about the followers of similar artists"
     ),
     llm=llm,
-    tools=[get_similar_artists, find_artist_id_for_artist],
+    tools=[get_similar_artists, find_artist_id_for_artist, get_venues],
     can_handoff_to=["ManagerAgent", "SocialMediaDataAgent", "StreamingChartAgent"]
 )
 
@@ -1149,7 +1220,7 @@ import asyncio
 from contextlib import suppress
 
 MAX_CONCURRENCY = 15
-TASK_TIMEOUT_S = 1800
+TASK_TIMEOUT_S = 1800 #wonder whether this is causing issues
 
 async def mainFunctionConcurrentTemplate(chosen_artist, prompt_structure_array, prompt_structure_text):
     #response = await workflow.run(user_msg="What is Bertie Blackman's Chartmetric artist ID?"
@@ -1164,6 +1235,11 @@ async def mainFunctionConcurrentTemplate(chosen_artist, prompt_structure_array, 
 
     #llm call to generate dynamic questions, and prompt
     questions_to_ask = generate_questions_dynamic(chosen_artist, prompt_structure_text)
+
+    print(f"🚨🚨🚨value of prompt_structure_array within main Fuction at start is {prompt_structure_array}🚨🚨🚨")
+
+    #swa in alternative version that just iterates through arrays
+
 
     #create clone, try instead iteratimg through each section of the prompt/purpose_outline
     #cut otu questions to ask, and just feed completed analysis for each sub-section into one final LLM call to synthesise and format
@@ -1185,6 +1261,10 @@ async def mainFunctionConcurrentTemplate(chosen_artist, prompt_structure_array, 
         thoughts_chunks = []
         answer = ""
 
+        # question = "You need to do research for the answer to the following report subsection:" + user_msg["text"] + f"and you should include these functions amongst those you use: + " + ", ".join(f"{i}:{f}" for i, f in enumerate(user_msg["functions"])) + f"for artist {chosen_artist}"
+        # print(f"🚨🚨🚨question is {question}")
+        today_iso = date.today().isoformat() 
+
         # create/re-create workflow with new question as user_msg
         workflow = AgentWorkflow(
             agents=[similarity_agent, social_media_data_agent, manager_agent, streaming_chart_agent],
@@ -1192,6 +1272,7 @@ async def mainFunctionConcurrentTemplate(chosen_artist, prompt_structure_array, 
             initial_state={
                 "working_notes": {},
                 "user question": user_msg,
+                "current_date": today_iso,
                 "users language": "English"
             }
         )
@@ -1246,13 +1327,13 @@ async def mainFunctionConcurrentTemplate(chosen_artist, prompt_structure_array, 
                         "🛠️  Planning to use tools:",
                         [call.tool_name for call in event.tool_calls],
                     )
-                elif isinstance(event, ToolCallResult):
-                    print(f"🔧 Tool Result ({event.tool_name}):")
-                    print(f"  Arguments: {event.tool_kwargs}")
-                    print(f"  Output: {event.tool_output}")
-                elif isinstance(event, ToolCall):
-                    print(f"🔨 Calling Tool: {event.tool_name}")
-                    print(f"  With arguments: {event.tool_kwargs}")
+            elif isinstance(event, ToolCallResult):
+                print(f"🔧 Tool Result ({event.tool_name}):")
+                print(f"  Arguments: {event.tool_kwargs}")
+                print(f"  Output: {event.tool_output}")
+            elif isinstance(event, ToolCall):
+                print(f"🔨 Calling Tool: {event.tool_name}")
+                print(f"  With arguments: {event.tool_kwargs}")
 
         state = await ctx.store.get("state")
         all_states[f"Q{index+1}"] = {
