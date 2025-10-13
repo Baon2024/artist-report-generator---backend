@@ -16,6 +16,14 @@ was consistently minimalist, and rarely made use of most of the raw relevant dat
 the final thing is that in order to open generated reorts in development localhost mode, you need to generate a Google credentials JSON, which isnt in this git repo.  
 The deployed version has this added as secret variables in Render, which is the best way to see what format is expected. The current limitation is that its linked to my inaugural account. I seem able to give access to anyone from inaugural to download reports as google docs, but this presumably doesnt apply to end Core Collectif users.
 
+In order to run server locally, use "uvicorn serverConcurrentTemplate:app --host 0.0.0.0 --port 3011".
+I have also been using a variant to save all the terminal output to a file, so I could examine it for errors and understand agent decision making.
+This version is run with "PYTHONUTF8=1 PYTHONIOENCODING=utf-8 python -X utf8 -m uvicorn serverConcurrentTemplate:app --host 0.0.0.0 --port 3011 2>&1 | tee -a output.log"
+
+beginning last week, a version discrepency between LlamaIndex and openai occured. They currently only work together now with certain package versions, which I switched to.
+In order to use the right versions, I added a requirements.txt file, and run the server inside of a virtual venv environment. My own instructions are commented at the bottom of the serverConcurrentTemplate.py file.
+This isnt an issue for the deployed version, as it always builds from the requirements.txt anyway. 
+
 
 
 
