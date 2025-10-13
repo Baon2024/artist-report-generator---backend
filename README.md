@@ -12,3 +12,10 @@ of each template, and did test it by switching the question generation to use th
 
 The final report is actually generated using the combined memory from the runs of all the agents, rather than the answers they return. The reason for this is that the returned answer for each question
 was consistently minimalist, and rarely made use of most of the raw relevant data present in the agents memories. Therefore, passing the memory for the final LLM call seemed a better approach. 
+
+the final thing is that in order to open generated reorts in development localhost mode, you need to generate a Google credentials JSON, which isnt in this git repo.  
+The deployed version has this added as secret variables in Render, which is the best way to see what format is expected. The current limitation is that its linked to my inaugural account. I seem able to give access to anyone from inaugural to download reports as google docs, but this presumably doesnt apply to end Core Collectif users.
+
+
+
+
