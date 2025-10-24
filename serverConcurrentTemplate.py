@@ -220,6 +220,8 @@ if __name__ == "__server__":
 
 # Run: uvicorn serverConcurrentTemplate:app --host 0.0.0.0 --port 3011 --reload > output.log 2>&1
 
+#extra comment for new git add 
+
 #use a virtual env to mangage conflict in versions
 #create with, python -m venv .venv
 #source .venv/Scripts/activate
