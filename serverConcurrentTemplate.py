@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Any
+from typing import Any, Literal, Optional
 from dotenv import load_dotenv
 #from gradio_client import AsyncClient  # pip install gradio_client
 #from helFunction import generate_report_sync
@@ -16,7 +16,8 @@ from get_template_prompt_structure import get_template_prompt_structure
 from helFunctionConcurrentTemplate import generate_report_sync_concurrent_template
 from dynamic_prompt_structure import generate_dynamic_report_prompt_structure
 from helFunctionConcurrent import generate_report_sync_concurrent
-
+from get_artist_stage import get_artist_stage
+from get_template_prompt_structure_latest import get_template_prompt_structure_latest
 
 load_dotenv()
 
@@ -31,7 +32,7 @@ app = FastAPI()
 
 # Only allow your frontends
 origins = [
-    "http://localhost:3000",
+    "http://localhost:3001",
     "https://artist-report-generator-frontend.vercel.app",
     "https://reverb.corecollectif.com",
     "https://core-collectif-web-app.vercel.app"
@@ -52,6 +53,14 @@ class GeneratedReport(BaseModel):
     artistReport: str
     chosenArtist: str
     reportFocus: str
+
+
+
+class ReportRequestLatest(BaseModel):
+    chosen_artist: str
+    report_focus: Literal["track_release", "album_release", "fanbase_and_growth_analysis", "catalogue_revival"] #"track_release", "album_release", "fanbase_and_growth_analysis", "catalogue_revival"
+    custom_additional_request: Optional[str]
+    chartmetric_id: int
 
 
 @app.get("/health")
@@ -212,13 +221,61 @@ async def report_generator(payload: ReportRequest) -> Any:
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate report: {e}")
+    
+
+
+@app.post("/reportGeneratorLatest")#endpoint for new Reverb variant, with 4 report choices, and a custom prompt extension
+async def report_generator(payload: ReportRequestLatest) -> Any:
+    chosen_artist = payload.chosen_artist
+    report_focus = payload.report_focus
+    custom_additional_prompt = payload.custom_additional_request
+    chartmetric_id = payload.chartmetric_id
+
+    print(f"chosen_artist is: {chosen_artist}")
+    print(f"report_focus is: {report_focus}")
+    print(f"custom_additional_prompt is: {custom_additional_prompt}")
+    print(f"chartmetric_id is: {chartmetric_id}")  
+
+    if not chosen_artist or not report_focus:
+        raise HTTPException(status_code=404, detail="either chosenArtist or purposeOutline do not exist or both")
+
+    
+    #first need to get artist stage
+    artist_stage = get_artist_stage(chartmetric_id)
+    
+    report_question = report_focus + f"for the artist {chosen_artist}"
+    print(f"report_question is: {report_question}")
+
+    #Need to change this to use the new, current, templates, and pass artist_stage to get right stage key
+    prompt_structure_text, prompt_structure_array = get_template_prompt_structure_latest(report_focus, chosen_artist, artist_stage)
+    print(f"value of prompt_structure_text, prompt_structure_array: { prompt_structure_text, prompt_structure_array}")
+    #relace here, with temlate logiv
+
+    #then pass custom prompt addition to final report generation
+
+    #pass down prompt structure as function param, then need to add overall_answers to prompt structure in mainFunction.py, before sending to model
+    
+
+    try: 
+        # Run your (blocking/async-mixed) pipeline in a thread
+        result_text = await to_thread.run_sync(
+            generate_report_sync_concurrent_template, chosen_artist, prompt_structure_array, prompt_structure_text, custom_additional_prompt
+        )
+
+        # Mirror your old behavior (Node returned result.data[0]); here we just return the text.
+        # If your frontend expects JSON, wrap it:
+        return result_text
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate report: {e}")
+    
 
 if __name__ == "__server__":
     import uvicorn
-    port = int(os.getenv("PORT", "3011"))
+    port = int(os.getenv("PORT", "8000"))
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
 
-# Run: uvicorn serverConcurrentTemplate:app --host 0.0.0.0 --port 3011 --reload > output.log 2>&1
+# Run: uvicorn serverConcurrentTemplate:app --host 0.0.0.0 --port 3012 --reload > output.log 2>&1
 
 #extra comment for new git add 
 

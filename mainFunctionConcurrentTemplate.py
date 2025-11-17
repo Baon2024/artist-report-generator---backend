@@ -1222,7 +1222,7 @@ from contextlib import suppress
 MAX_CONCURRENCY = 15
 TASK_TIMEOUT_S = 1800 #wonder whether this is causing issues
 
-async def mainFunctionConcurrentTemplate(chosen_artist, prompt_structure_array, prompt_structure_text):
+async def mainFunctionConcurrentTemplate(chosen_artist, prompt_structure_array, prompt_structure_text, custom_additional_prompt_request):
     #response = await workflow.run(user_msg="What is Bertie Blackman's Chartmetric artist ID?"
 #, ctx=ctx) python llamaOaAgent.py
     #chosen_artist = "Kenan Doğulu"
@@ -1548,9 +1548,13 @@ Your data is {overall_answers}
     print(f"Total tokens of prompt: {total_tokens}")
 
     max_tokens = 16384 - total_tokens - 200
-    
-    final_prompt = prompt_structure_text + f"""Your sole data source should be: {overall_answers}""" + f"""The artist is: {chosen_artist}"""
-    
+
+    final_prompt = ""
+    if custom_additional_prompt_request:
+        final_prompt = prompt_structure_text + f"""Your sole data source should be: {overall_answers}""" + f"""The artist is: {chosen_artist}""" + f"""and the user has this additional request: {custom_additional_prompt_request}"""
+    else:
+        final_prompt = prompt_structure_text + f"""Your sole data source should be: {overall_answers}""" + f"""The artist is: {chosen_artist}"""
+
     response = client.responses.create(
     model="o3",
     input=[
