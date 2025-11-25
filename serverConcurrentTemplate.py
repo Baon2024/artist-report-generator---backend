@@ -18,6 +18,10 @@ from dynamic_prompt_structure import generate_dynamic_report_prompt_structure
 from helFunctionConcurrent import generate_report_sync_concurrent
 from get_artist_stage import get_artist_stage
 from get_template_prompt_structure_latest import get_template_prompt_structure_latest
+import psycopg2
+from psycopg2.extras import Json
+from google import genai
+from google.genai import types
 
 load_dotenv()
 
@@ -240,6 +244,8 @@ async def report_generator(payload: ReportRequestLatest) -> Any:
         raise HTTPException(status_code=404, detail="either chosenArtist or purposeOutline do not exist or both")
 
     
+    
+
     #first need to get artist stage
     artist_stage = get_artist_stage(chartmetric_id)
     
@@ -255,19 +261,80 @@ async def report_generator(payload: ReportRequestLatest) -> Any:
 
     #pass down prompt structure as function param, then need to add overall_answers to prompt structure in mainFunction.py, before sending to model
     
+    ##commenting everything out, for new attempt
 
-    try: 
+    #need to get all data from database
+    # Fetch variables
+    USER = os.getenv("USER")
+    PASSWORD = os.getenv("PASSWORD")
+    HOST = os.getenv("HOST")
+    PORT = os.getenv("PORT")
+    DBNAME = os.getenv("DBNAME")
+
+    data_for_report = None
+
+    try:
+        connection = psycopg2.connect(
+            user=USER,
+            password=PASSWORD,
+            host=HOST,
+            port=PORT,
+            dbname=DBNAME
+            )
+        print("Connection successful!")
+    
+        # Create a cursor to execute SQL queries
+        cursor = connection.cursor()
+    
+        # query
+        sql = "SELECT * FROM artist_data_from_chartmetric WHERE chartmetric_id_uuid = %s"
+        cursor.execute(sql, (chartmetric_id,))
+        result = cursor.fetchone()
+
+        if result is None:
+            print("No row found.")
+        else:
+            colnames = [desc[0] for desc in cursor.description]
+            row_dict = dict(zip(colnames, result))
+            print("Row with column headers:")
+            print(row_dict)
+            data_for_report = row_dict
+
+            #generate report, using data and prompt structure text
+
+            client = genai.Client()
+
+            contents_prompt = prompt_structure_text + f"""Your sole data source should be: {data_for_report}""" + f"""The artist is: {chosen_artist}""" + f"""and the user has this additional request: {custom_additional_prompt}"""
+
+            
+
+            report = client.models.generate_content(
+                model="gemini-3-pro-preview",
+                contents=contents_prompt,
+            )
+
+            print(f"response from report generation is: {report.text}")
+            return report.text
+
+
+
+        
+    except Exception as e:
+        print(f"error is: {e}")
+
+
+    #try: 
         # Run your (blocking/async-mixed) pipeline in a thread
-        result_text = await to_thread.run_sync(
-            generate_report_sync_concurrent_template, chosen_artist, prompt_structure_array, prompt_structure_text, custom_additional_prompt
-        )
+        #result_text = await to_thread.run_sync(
+            #generate_report_sync_concurrent_template, chosen_artist, prompt_structure_array, prompt_structure_text, custom_additional_prompt
+       # )
 
         # Mirror your old behavior (Node returned result.data[0]); here we just return the text.
         # If your frontend expects JSON, wrap it:
-        return result_text
+        #return result_text
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to generate report: {e}")
+    #except Exception as e:
+        #raise HTTPException(status_code=500, detail=f"Failed to generate report: {e}")
     
 
 if __name__ == "__server__":

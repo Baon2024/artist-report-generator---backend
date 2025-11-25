@@ -1,4 +1,4 @@
-import google.generativeai as genai
+#import google.generativeai as genai
 import re
 import json
 import os
@@ -9,10 +9,10 @@ load_dotenv()
 
 client = OpenAI()
 
-genai.configure(api_key="AIzaSyBtpgpnI_kzxPfvlqoDbaYwlOPdxI89qNI")
-client = OpenAI(
-    api_key=os.getenv('OPENAI_API_KEY'),
-)
+#genai.configure(api_key="AIzaSyBtpgpnI_kzxPfvlqoDbaYwlOPdxI89qNI")
+#client = OpenAI(
+    #api_key=os.getenv('OPENAI_API_KEY'),
+#)
 
 
 #artist_name = "Kenan Doğulu"

@@ -31,7 +31,11 @@ tiktoken
 gradio
 
 # Google Generative AI client
-google-generativeai
+google-genai
+
+
+
+psycopg2
 
 # Optional: If helper_function.py or other modules import them
 # Add any other third-party libs you see in imports there.
