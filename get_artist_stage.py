@@ -53,3 +53,4 @@ def get_artist_stage(chartmetric_id):
             return artist_stage_illoced
     except Exception as e:
         print(f"error: {e}")
+        raise

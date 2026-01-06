@@ -20,6 +20,7 @@ from get_artist_stage import get_artist_stage
 from get_template_prompt_structure_latest import get_template_prompt_structure_latest
 import psycopg2
 from psycopg2.extras import Json
+from psycopg2 import OperationalError, Error as PsycopgError
 from google import genai
 from google.genai import types
 
@@ -247,7 +248,15 @@ async def report_generator(payload: ReportRequestLatest) -> Any:
     
 
     #first need to get artist stage
-    artist_stage = get_artist_stage(chartmetric_id)
+    try:
+        artist_stage = get_artist_stage(chartmetric_id)
+    except ValueError as e:
+        print(f"artist_stage could not be found with this chartmetric_id from internal CC Google Sheet : {chartmetric_id}")
+        raise HTTPException(
+        status_code=404,
+        detail=f"artist_stage could not be found for chartmetric_id={chartmetric_id}: {e}"
+    )
+
     
     report_question = report_focus + f"for the artist {chosen_artist}"
     print(f"report_question is: {report_question}")
@@ -273,68 +282,134 @@ async def report_generator(payload: ReportRequestLatest) -> Any:
 
     data_for_report = None
 
+
     try:
-        connection = psycopg2.connect(
+        with psycopg2.connect(
             user=USER,
             password=PASSWORD,
             host=HOST,
             port=PORT,
             dbname=DBNAME
-            )
-        print("Connection successful!")
+            ) as connection:
+            with connection.cursor() as cursor:
+                print("Connection successful!")
+                
+                ##first, use the artist_reference table to find internal artist id, using chartmetric id
+                chartmetric_id_str = str(chartmetric_id)
     
-        # Create a cursor to execute SQL queries
-        cursor = connection.cursor()
-    
-        # query
-        sql = "SELECT * FROM artist_data_from_chartmetric WHERE chartmetric_id_uuid = %s"
-        cursor.execute(sql, (chartmetric_id,))
-        result = cursor.fetchone()
+                # query
+                sql = """SELECT id FROM artist_reference 
+                   WHERE artistid = %s AND metric = 'chartMetrics'"""
+                cursor.execute(sql, (chartmetric_id_str,))
+                result = cursor.fetchone()
 
-        if result is None:
-            print("No row found.")
-        else:
-            colnames = [desc[0] for desc in cursor.description]
-            row_dict = dict(zip(colnames, result))
-            print("Row with column headers:")
-            print(row_dict)
-            data_for_report = row_dict
-
-            #generate report, using data and prompt structure text
-
-            client = genai.Client()
-
-            contents_prompt = prompt_structure_text + f"""Your sole data source should be: {data_for_report}""" + f"""The artist is: {chosen_artist}""" + f"""and the user has this additional request: {custom_additional_prompt}"""
-
-            
-
-            report = client.models.generate_content(
-                model="gemini-3-pro-preview",
-                contents=contents_prompt,
-            )
-
-            print(f"response from report generation is: {report.text}")
-            return report.text
-
-
-
+                if result is None: ##need to handle error, and sent back to frontend, if artist cannot be found
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"No artist_reference match for chartmetric_id={chartmetric_id}",
+                    )
         
+                print(f"internal_id should be: {result}")
+                internal_id = (result[0])
+                print(f"internal_id after str: {internal_id}")
+
+                ## 2 - Use internal id to access artist's data for every row
+                sql = """SELECT * FROM artist_metrics
+                  WHERE artistsid = %s"""
+                cursor.execute(sql, (internal_id,))
+                artist_metrics_result = cursor.fetchall()
+                print(f"artist data fetched from artist metrics: {artist_metrics_result}")
+
+                if not artist_metrics_result:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"No artist_metrics for internal_id={internal_id})"
+                    )
+
+                artist_metrics = artist_metrics_result[0]
+
+                data_for_report = f"The metrics of the artist are: {artist_metrics}"
+
+                ## 3a - get tracks of artists
+                sql = """SELECT * FROM track_reference
+                  WHERE artistid = %s"""
+                cursor.execute(sql, (internal_id,))
+                artist_tracks_results = cursor.fetchall()
+
+                print(f"artist_tracks are: {artist_tracks_results}")
+        
+                #need to handle for if there are no tracks for artist
+
+                ## 3b - get track metrics for these tracks
+                tracks_and_metrics = []
+
+                for (isrc, track_name, internal_id, date) in artist_tracks_results:
+                    print(f"track is: {isrc, track_name, internal_id, date}")
+
+                    #use isrc to query track_metrics for track
+                    sql = """SELECT * FROM track_metrics
+                      WHERE isrc = %s"""
+                    cursor.execute(sql, (isrc,))
+            
+                    track_metrics_for_track = cursor.fetchall()
+                    print(f"track_metrics_for_track {track_name} are: {track_metrics_for_track}")
+
+                    track_metrics = {
+                        "track": track_name,
+                        "track_metrics": track_metrics_for_track
+                    }
+                    tracks_and_metrics.append(track_metrics)
+                    print("added track metrics and track !")
+        
+                print(f"value of tracks_and_metrics are: {tracks_and_metrics}")
+
+                data_for_report += f"And these are the tracks of the artist, and their metrics: {tracks_and_metrics}"
+        
+                ## 4 - get social media for the artist
+                sql = """SELECT * FROM social_posts
+                  WHERE artist_id = %s"""
+                cursor.execute(sql, (internal_id,))
+                social_media_results = cursor.fetchall()
+
+                if not social_media_results:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"no social_media results found for internal id {internal_id}"
+                    )
+
+                print(f"social_media_results for artist are: {social_media_results}")
+
+                data_for_report += f"and these are the social media posts of/about the artist: {social_media_results}"
+        
+                #then generate report
+                client = genai.Client()
+        
+                contents_prompt = prompt_structure_text + f"""Your sole data source should be: {data_for_report}""" + f"""The artist is: {chosen_artist}""" + f"""and the user has this additional request: {custom_additional_prompt}""" + "simply return the report, no preliminary comment."
+        
+                report = client.models.generate_content(
+                    model="gemini-3-pro-preview",
+                    contents=contents_prompt,
+                )
+
+                print(f"response from report generation is: {report.text}")
+                return report.text
+    
+    except HTTPException:
+        # Important: let your intentional HTTP errors pass through unchanged
+        raise
+
+    except OperationalError as e:
+        # DB down / connection issues
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {e}")
+
+    except PsycopgError as e:
+        # SQL error, cursor issues, etc.
+        raise HTTPException(status_code=500, detail=f"Database query failed: {e}")
+
     except Exception as e:
-        print(f"error is: {e}")
-
-
-    #try: 
-        # Run your (blocking/async-mixed) pipeline in a thread
-        #result_text = await to_thread.run_sync(
-            #generate_report_sync_concurrent_template, chosen_artist, prompt_structure_array, prompt_structure_text, custom_additional_prompt
-       # )
-
-        # Mirror your old behavior (Node returned result.data[0]); here we just return the text.
-        # If your frontend expects JSON, wrap it:
-        #return result_text
-
-    #except Exception as e:
-        #raise HTTPException(status_code=500, detail=f"Failed to generate report: {e}")
+        # Truly unexpected
+        raise 
+    
     
 
 if __name__ == "__server__":
