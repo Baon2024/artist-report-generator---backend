@@ -320,11 +320,14 @@ async def report_generator(payload: ReportRequestLatest) -> Any:
                 artist_metrics_result = cursor.fetchall()
                 print(f"artist data fetched from artist metrics: {artist_metrics_result}")
 
+                
+                
                 if not artist_metrics_result:
-                    raise HTTPException(
-                        status_code=404,
-                        detail=f"No artist_metrics for internal_id={internal_id})"
-                    )
+                    print(f"No artist_metrics for internal_id={internal_id})")
+
+                if artist_metrics_result:
+                    print(f"artist_metric_results for artist are: {artist_metrics_result}")
+                    data_for_report += f"and these are the artist_metric_results of/about the artist: {artist_metrics_result}"
 
                 artist_metrics = artist_metrics_result[0]
 
@@ -372,14 +375,11 @@ async def report_generator(payload: ReportRequestLatest) -> Any:
                 social_media_results = cursor.fetchall()
 
                 if not social_media_results:
-                    raise HTTPException(
-                        status_code=404,
-                        detail=f"no social_media results found for internal id {internal_id}"
-                    )
+                    print(f"no social media posts exist in supabase database for artist: {chosen_artist}")
 
-                print(f"social_media_results for artist are: {social_media_results}")
-
-                data_for_report += f"and these are the social media posts of/about the artist: {social_media_results}"
+                if social_media_results:
+                    print(f"social_media_results for artist are: {social_media_results}")
+                    data_for_report += f"and these are the social media posts of/about the artist: {social_media_results}"
         
                 #then generate report
                 client = genai.Client()
