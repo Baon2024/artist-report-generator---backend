@@ -327,7 +327,7 @@ async def report_generator(payload: ReportRequestLatest) -> Any:
 
                 if artist_metrics_result:
                     print(f"artist_metric_results for artist are: {artist_metrics_result}")
-                    data_for_report += f"and these are the artist_metric_results of/about the artist: {artist_metrics_result}"
+                    data_for_report = f"and these are the artist_metric_results of/about the artist: {artist_metrics_result}"
 
                 artist_metrics = artist_metrics_result[0]
 
