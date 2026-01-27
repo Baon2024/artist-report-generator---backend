@@ -22,6 +22,7 @@ openai==1.109.1
 llama-index==0.13.6
 llama-index-core==0.13.6
 llama-index-llms-openai==0.5.1
+langfuse==3.12.1
 
 
 # Token counting
