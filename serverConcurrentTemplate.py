@@ -43,10 +43,7 @@ app = FastAPI()
 
 # Only allow your frontends
 origins = [
-    "http://localhost:3001",
-    "https://artist-report-generator-frontend.vercel.app",
-    "https://reverb.corecollectif.com",
-    "https://core-collectif-web-app.vercel.app"
+    "*"
 ]
 app.add_middleware(
     CORSMiddleware,
