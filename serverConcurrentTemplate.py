@@ -1,5 +1,6 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Respones
 from pydantic import BaseModel
 from typing import Any, Literal, Optional
 from dotenv import load_dotenv
@@ -77,6 +78,44 @@ class ReportRequestLatest(BaseModel):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+
+@app.middleware("http")
+async def preflight_middleware(request: Request, call_next):
+    if request.method == "OPTIONS":
+        origin = request.headers.get("origin")
+        req_headers = request.headers.get("access-control-request-headers", "")
+        req_method = request.headers.get("access-control-request-method", "POST")
+
+        headers = {
+            "Access-Control-Allow-Methods": req_method if req_method else "POST,OPTIONS",
+            "Access-Control-Allow-Headers": req_headers if req_headers else "*",
+            "Access-Control-Max-Age": "86400",
+        }
+
+        # Echo origin only if allowed (needed if you ever use credentials)
+        if origin in ALLOWED_ORIGINS:
+            headers["Access-Control-Allow-Origin"] = origin
+            headers["Vary"] = "Origin"
+            headers["Access-Control-Allow-Credentials"] = "true"
+        else:
+            # If you truly want open CORS without credentials:
+            headers["Access-Control-Allow-Origin"] = "*"
+            headers["Access-Control-Allow-Credentials"] = "false"
+
+        return Response(status_code=204, headers=headers)
+
+    response = await call_next(request)
+
+    # Add CORS headers on normal responses too
+    origin = request.headers.get("origin")
+    if origin in ALLOWED_ORIGINS:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Vary"] = "Origin"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+
+    return response
 
 
 ##server endoint to generate google doc from generated reort, and return it to user
