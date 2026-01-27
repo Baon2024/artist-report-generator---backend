@@ -23,8 +23,14 @@ from psycopg2.extras import Json
 from psycopg2 import OperationalError, Error as PsycopgError
 from google import genai
 from google.genai import types
+from langfuse import get_client
 
 load_dotenv()
+
+os.environ["LANGFUSE_SECRET_KEY"] = "sk-lf-7cb412d2-7c34-4121-a316-ee1db6e8dd7a"
+os.environ["LANGFUSE_PUBLIC_KEY"] = "pk-lf-ec5ca377-ee0a-4fdf-856a-e500a2dce109"
+os.environ["LANGFUSE_HOST"] = "https://cloud.langfuse.com"
+
 
 client = OpenAI(
     api_key=os.getenv('OPENAI_API_KEY'),
@@ -261,9 +267,27 @@ async def report_generator(payload: ReportRequestLatest) -> Any:
     report_question = report_focus + f"for the artist {chosen_artist}"
     print(f"report_question is: {report_question}")
 
-    #Need to change this to use the new, current, templates, and pass artist_stage to get right stage key
-    prompt_structure_text, prompt_structure_array = get_template_prompt_structure_latest(report_focus, chosen_artist, artist_stage)
-    print(f"value of prompt_structure_text, prompt_structure_array: { prompt_structure_text, prompt_structure_array}")
+    langfuse = get_client()
+
+    #Assemble url for langfuse folder dynamically
+    langfuse_prompt_url = f"Reverb_report_generation_prompt/report_type_prompt/{artist_stage.lower()}/{report_focus}"
+    #not all possibkilities eixst - so need to handle for that
+
+
+    prompt_client = langfuse.get_prompt(langfuse_prompt_url, label="production")
+
+    compiled_langfuse_prompt_structure_text = prompt_client.compile()
+
+    print(f"prompt retrieved from langfuse is: {compiled_langfuse_prompt_structure_text}")
+
+
+    ##replace getting prompt locally, with fetching it from langfuse
+
+    ####
+    #prompt_structure_text, prompt_structure_array = get_template_prompt_structure_latest(report_focus, chosen_artist, artist_stage)
+    #print(f"value of prompt_structure_text, prompt_structure_array: { prompt_structure_text, prompt_structure_array}")
+    ###
+
     #relace here, with temlate logiv
 
     #then pass custom prompt addition to final report generation
@@ -384,15 +408,45 @@ async def report_generator(payload: ReportRequestLatest) -> Any:
                 #then generate report
                 client = genai.Client()
         
-                contents_prompt = prompt_structure_text + f"""Your sole data source should be: {data_for_report}""" + f"""The artist is: {chosen_artist}""" + f"""and the user has this additional request: {custom_additional_prompt}""" + "simply return the report, no preliminary comment."
-        
-                report = client.models.generate_content(
-                    model="gemini-3-pro-preview",
-                    contents=contents_prompt,
-                )
 
-                print(f"response from report generation is: {report.text}")
-                return report.text
+                #additional_prompt = f"""Your sole data source should be: {data_for_report}. The artist is: {chosen_artist} and the user has this additional request: {custom_additional_prompt} simply return the report, no preliminary comment."""
+                
+                langfuse_additional_prompt_url = "Reverb_report_generation_prompt/additional_report_generation_prompt/additional_prompt"
+                additional_prompt_client = langfuse.get_prompt(langfuse_additional_prompt_url, label="production")
+                compiled_langfuse_additional_prompt = additional_prompt_client.compile(data_for_report=data_for_report, chosen_artist=chosen_artist, custom_additional_prompt=custom_additional_prompt) #pass in variables
+                print(f"compiled_langfuse_additional_prompt is: {compiled_langfuse_additional_prompt}")
+                
+                contents_prompt = compiled_langfuse_prompt_structure_text + compiled_langfuse_additional_prompt #need to be make these prompt additions into langfuse sources ones. 
+                
+                
+                
+                # Start a generation and make it "current" for this request context
+                with langfuse.start_as_current_generation(
+                    name="gemini_generate_reverb_report",
+                    model="gemini-3-pro-preview",
+                    input=contents_prompt,
+                ) as gen:
+                    
+                    #actual report generation
+                    report = client.models.generate_content(
+                        model="gemini-3-pro-preview",
+                        contents=contents_prompt,
+                    )
+                    print(f"report.text is: {report.text}")
+
+                    # Update the generation (LLM call span)
+                    langfuse.update_current_generation(output=report.text)
+
+                    # Update trace-level attributes (the overall workflow)
+                    langfuse.update_current_trace(
+                        name="reverb_report_generation_backend",
+                        user_id=str(chosen_artist),
+                        metadata={"pipeline": "reverb_report"},
+                        output={"ok": True},
+                    )
+
+            langfuse.flush()
+            return report.text
     
     except HTTPException:
         # Important: let your intentional HTTP errors pass through unchanged
