@@ -271,19 +271,7 @@ async def report_generator(payload: ReportRequestLatest) -> Any:
     report_question = report_focus + f"for the artist {chosen_artist}"
     print(f"report_question is: {report_question}")
 
-    langfuse = get_client()
-
-    #Assemble url for langfuse folder dynamically
-    langfuse_prompt_url = f"Reverb_report_generation_prompt/report_type_prompt/{artist_stage.lower()}/{report_focus}"
-    #not all possibkilities eixst - so need to handle for that
-
-
-    prompt_client = langfuse.get_prompt(langfuse_prompt_url, label="production")
-
-    compiled_langfuse_prompt_structure_text = prompt_client.compile()
-
-    print(f"prompt retrieved from langfuse is: {compiled_langfuse_prompt_structure_text}")
-
+    
 
     ##replace getting prompt locally, with fetching it from langfuse
 
@@ -308,7 +296,7 @@ async def report_generator(payload: ReportRequestLatest) -> Any:
     DB_PORT = os.getenv("DB_PORT", "5432")
     DB_NAME = os.getenv("DB_NAME")
 
-    data_for_report = None
+    data_for_report = {}
 
 
     try:
@@ -355,11 +343,11 @@ async def report_generator(payload: ReportRequestLatest) -> Any:
 
                 if artist_metrics_result:
                     print(f"artist_metric_results for artist are: {artist_metrics_result}")
-                    data_for_report = f"and these are the artist_metric_results of/about the artist: {artist_metrics_result}"
+                    data_for_report = { "artist_metric_results of/about the artist" : artist_metrics_result }
+                
 
-                artist_metrics = artist_metrics_result[0]
+                
 
-                data_for_report = f"The metrics of the artist are: {artist_metrics}"
 
                 ## 3a - get tracks of artists
                 sql = """SELECT * FROM track_reference
@@ -394,7 +382,7 @@ async def report_generator(payload: ReportRequestLatest) -> Any:
         
                 print(f"value of tracks_and_metrics are: {tracks_and_metrics}")
 
-                data_for_report += f"And these are the tracks of the artist, and their metrics: {tracks_and_metrics}"
+                data_for_report["Arist_tracks_metrics"] = tracks_and_metrics
         
                 ## 4 - get social media for the artist
                 sql = """SELECT * FROM social_posts
@@ -407,34 +395,82 @@ async def report_generator(payload: ReportRequestLatest) -> Any:
 
                 if social_media_results:
                     print(f"social_media_results for artist are: {social_media_results}")
-                    data_for_report += f"and these are the social media posts of/about the artist: {social_media_results}"
-        
+                    data_for_report["social_media_posts"] = social_media_results
+                
+                langfuse = get_client()
+
+                dataset_name = f"artist_run/{chosen_artist}/{report_focus}"
+                
+                try:
+                    dataset = langfuse.get_dataset(name=dataset_name)
+                    print(f"dataset returned from langfuse is: {dataset}")
+                except Exception as e:
+                    msg = str(e)
+                    if "not found" in msg.lower() or "404" in msg:
+                        print(f"langfuse dataset {dataset_name} not found: creating new dataset ..")
+                        langfuse.create_dataset(name=dataset_name)
+                    else:
+                        raise
+                
+                ## should probably only create new item in dataset if data has changed - so if new day?
+
+                #insert the supabase artist data into langfuse dataset:
+                langfuse.create_dataset_item(
+                    dataset_name=dataset_name,
+                    input={
+                        "chosen_artist": chosen_artist,
+                        "report_focus": report_focus,
+                        "custom_additional_prompt": custom_additional_prompt,
+                        "data_for_report": data_for_report
+                    },
+                )
+
+
+
                 #then generate report
                 client = genai.Client()
-        
 
-                #additional_prompt = f"""Your sole data source should be: {data_for_report}. The artist is: {chosen_artist} and the user has this additional request: {custom_additional_prompt} simply return the report, no preliminary comment."""
-                
-                langfuse_additional_prompt_url = "Reverb_report_generation_prompt/additional_report_generation_prompt/additional_prompt"
-                additional_prompt_client = langfuse.get_prompt(langfuse_additional_prompt_url, label="production")
-                compiled_langfuse_additional_prompt = additional_prompt_client.compile(data_for_report=data_for_report, chosen_artist=chosen_artist, custom_additional_prompt=custom_additional_prompt) #pass in variables
-                print(f"compiled_langfuse_additional_prompt is: {compiled_langfuse_additional_prompt}")
-                
-                contents_prompt = compiled_langfuse_prompt_structure_text + compiled_langfuse_additional_prompt #need to be make these prompt additions into langfuse sources ones. 
-                
+
+                #Assemble url for langfuse folder dynamically
+                langfuse_prompt_url = f"Reverb_report_generation_prompt/report_type_prompt/{artist_stage.lower()}/{report_focus}"
+                #not all possibkilities eixst - so need to handle for that
+                print(f"langfuse_prompt_url is: {langfuse_prompt_url}")
+
+                prompt_client = langfuse.get_prompt(langfuse_prompt_url, label="production")
+    
+                ## get additional_prompt from same langfuse prompt - as chat structr=ure
+
+
+                compiled_langfuse_prompt = prompt_client.compile(data_for_report=data_for_report, chosen_artist=chosen_artist, custom_additional_prompt=custom_additional_prompt)
+                print(f"prompt retrieved from langfuse is: {compiled_langfuse_prompt}")
+
+                system_text = next((m["content"] for m in compiled_langfuse_prompt if m.get("role") == "system"), "")
+                user_text   = next((m["content"] for m in compiled_langfuse_prompt if m.get("role") == "user"), "")
+                contents_prompt = f"SYSTEM:\n{system_text}\n\nUSER:\n{user_text}"
+
+
+                cfg = (prompt_client.config or {})  # <-- config dict from Langfuse prompt version
+                model_name = cfg.get("model_name", "gemini-3-pro-preview")
+                temperature = cfg.get("temperature", 0.7)
+
+
+              
                 
                 
                 # Start a generation and make it "current" for this request context
                 with langfuse.start_as_current_generation(
                     name="gemini_generate_reverb_report",
-                    model="gemini-3-pro-preview",
+                    model=model_name,
                     input=contents_prompt,
                 ) as gen:
                     
                     #actual report generation
                     report = client.models.generate_content(
-                        model="gemini-3-pro-preview",
+                        model=model_name,
                         contents=contents_prompt,
+                        config=types.GenerateContentConfig(
+                            temperature=temperature
+                        )
                     )
                     print(f"report.text is: {report.text}")
 
