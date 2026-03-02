@@ -76,6 +76,12 @@ class ReportRequestLatest(BaseModel):
     chartmetric_id: int
 
 
+@app.on_event("startup")
+async def show_routes():
+    print("✅ ROUTES:")
+    for r in app.routes:
+        print(getattr(r, "methods", None), r.path)
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -263,12 +269,12 @@ async def report_generator(payload: ReportRequestLatest) -> Any:
     except ValueError as e:
         print(f"artist_stage could not be found with this chartmetric_id from internal CC Google Sheet : {chartmetric_id}")
         raise HTTPException(
-        status_code=404,
+        status_code=400,
         detail=f"artist_stage could not be found for chartmetric_id={chartmetric_id}: {e}"
     )
 
     
-    report_question = report_focus + f"for the artist {chosen_artist}"
+    report_question = report_focus + f" for the artist {chosen_artist}"
     print(f"report_question is: {report_question}")
 
     
@@ -440,18 +446,33 @@ async def report_generator(payload: ReportRequestLatest) -> Any:
     
                 ## get additional_prompt from same langfuse prompt - as chat structr=ure
 
+                cfg = (prompt_client.config or {})  # <-- config dict from Langfuse prompt version
+                model_name = cfg.get("model_name", "gemini-3-pro-preview")
+                temperature = cfg.get("temperature", 0.7)
+
+                ## Short-term fix to stop data size exceeding Gemini model input token cap:
+                GEMINI_MODEL_CAP = 1048576
+                BUFFER = 10000
+                token_count = client.models.count_tokens(
+                    model=model_name,
+                    contents=(str(data_for_report) + chosen_artist + custom_additional_prompt)
+                )
+                if token_count.total_tokens > (GEMINI_MODEL_CAP - BUFFER):
+                    discrepency = token_count.total_tokens - GEMINI_MODEL_CAP
+                    str(data_for_report)[discrepency:] #remove number of tokens you are over, from data_for_report
+
+                print("Input tokens:", token_count.total_tokens)
+
 
                 compiled_langfuse_prompt = prompt_client.compile(data_for_report=data_for_report, chosen_artist=chosen_artist, custom_additional_prompt=custom_additional_prompt)
-                print(f"prompt retrieved from langfuse is: {compiled_langfuse_prompt}")
+                #print(f"prompt retrieved from langfuse is: {compiled_langfuse_prompt}")
 
                 system_text = next((m["content"] for m in compiled_langfuse_prompt if m.get("role") == "system"), "")
                 user_text   = next((m["content"] for m in compiled_langfuse_prompt if m.get("role") == "user"), "")
                 contents_prompt = f"SYSTEM:\n{system_text}\n\nUSER:\n{user_text}"
 
 
-                cfg = (prompt_client.config or {})  # <-- config dict from Langfuse prompt version
-                model_name = cfg.get("model_name", "gemini-3-pro-preview")
-                temperature = cfg.get("temperature", 0.7)
+                
 
 
               
