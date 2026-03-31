@@ -11,8 +11,8 @@ from anyio import to_thread  # pip install anyio
 import os
 from openai import OpenAI
 from dynamic_prompt_structure import generate_dynamic_report_prompt_structure
-from googleSheetsMain import get_credentials, get_credentials_service
-from googleapiclient.discovery import build
+#from googleSheetsMain import get_credentials, get_credentials_service
+#from googleapiclient.discovery import build
 from get_template_prompt_structure import get_template_prompt_structure
 from helFunctionConcurrentTemplate import generate_report_sync_concurrent_template
 from dynamic_prompt_structure import generate_dynamic_report_prompt_structure
@@ -453,16 +453,42 @@ async def report_generator(payload: ReportRequestLatest) -> Any:
                 ## Short-term fix to stop data size exceeding Gemini model input token cap:
                 GEMINI_MODEL_CAP = 1048576
                 BUFFER = 10000
+                MAX_ALLOWED = GEMINI_MODEL_CAP - BUFFER
+
+                report_str = str(data_for_report)
+                suffix = chosen_artist + custom_additional_prompt
+
                 token_count = client.models.count_tokens(
                     model=model_name,
-                    contents=(str(data_for_report) + chosen_artist + custom_additional_prompt)
+                    contents=(report_str + suffix)
                 )
-                if token_count.total_tokens > (GEMINI_MODEL_CAP - BUFFER):
-                    discrepency = token_count.total_tokens - GEMINI_MODEL_CAP
-                    str(data_for_report)[discrepency:] #remove number of tokens you are over, from data_for_report
+                print("Input tokens before any trimming:", token_count.total_tokens)
 
-                print("Input tokens:", token_count.total_tokens)
+                while token_count.total_tokens > MAX_ALLOWED and len(report_str) > 0:
+                # crude approximation: remove a chunk of characters, then re-count
+                    overflow = token_count.total_tokens - MAX_ALLOWED
 
+                # remove more than overflow because chars != tokens
+                    shrink_by = max(5000, overflow) 
+
+                    report_str = report_str[:-shrink_by]
+
+                    print(f"token size too large - trimmed {shrink_by} chars")
+
+                    token_count = client.models.count_tokens(
+                        model=model_name,
+                        contents=(report_str + suffix)
+                    )
+                    print("Input tokens after trimming:", token_count.total_tokens)
+
+                
+
+                    data_for_report = report_str
+                
+                if token_count.total_tokens > MAX_ALLOWED:
+                        raise ValueError(
+                            f"Prompt still too large after trimming: {token_count.total_tokens} > {MAX_ALLOWED}"
+                        )
 
                 compiled_langfuse_prompt = prompt_client.compile(data_for_report=data_for_report, chosen_artist=chosen_artist, custom_additional_prompt=custom_additional_prompt)
                 #print(f"prompt retrieved from langfuse is: {compiled_langfuse_prompt}")
